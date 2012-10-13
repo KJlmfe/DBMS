@@ -14,7 +14,7 @@ enum datatype
 };
 
 
-
+//属性
 class Attribute
 {
 public:
@@ -36,12 +36,14 @@ public:
     }
 };
 
+//表
 class table{
 public:
-    string name;
-    vector<Attribute> Attributes;
+    string name;//表名
+    vector<Attribute> Attributes;//属性数组
     table()
     {
+        //测试数据
         name = "test";
         Attributes.push_back(Attribute("name",CHAR,4));
         Attributes.push_back(Attribute("phone",CHAR,5));
@@ -51,6 +53,7 @@ public:
 //        name.push_back("phone");
         insert(temp,name);
     }
+    //计算一个元组占用的空间
     int getsize()
     {
         int size = 0;
@@ -60,11 +63,16 @@ public:
         }
         return size;
     }
+    
+    //插入一个元组，AttributesName，是属性名数组，属性名顺序是任意的，data中，是属性对应的要插入的数据
+    
     void insert(char * data,vector<string> AttributesName)
     {
-        char * result = new char(getsize());
-        memset(result,0,getsize());
-        int a = getsize();
+        int size = getsize();
+        char * result = new char(size + 1);//建立空间，用来临时存放元组数据
+        memset(result,0,size+1);//清空
+        
+        //计算AttributesName中的元组所对应的数据，在char data中的位置
         vector<int> datalocation;
         int temp = 0;
         for (int i = 0;i < AttributesName.size();i++)
@@ -79,10 +87,14 @@ public:
             
         }
    
-        int location = 0;
+        int location = 0;//数据指针
+        //写入删除位
+        result[0] = 1;
+        location++;//移动数据指针
       
         for (int i = 0;i < Attributes.size();i++)
         {
+            //数据为空的话，写入初始数据
             switch (Attributes[i].type)
             {
             case INT:
@@ -99,6 +111,7 @@ public:
             default:
                 break;
             }
+            //如果当前元组，包含要插入的数据，则将要插入的数据，从data中读取，写入result中
             for (int j = 0;j < AttributesName.size();j++)
             {
                 if (AttributesName[j] == Attributes[i].name)
@@ -108,14 +121,18 @@ public:
             }
             location += Attributes[i].size;
         }
+        
+        
         fstream file;
         file.open(name.c_str(),ios::out | ios::app |ios::binary);
-        file.write(result,getsize());
+        file.write(result,size + 1);
         file.close();
         
     }
     
 };
+
+//将表结构，写入model中
 void writeTable(string tablename, int key, vector<Attribute> Table)
 {
     fstream file;
@@ -135,6 +152,7 @@ void writeTable(string tablename, int key, vector<Attribute> Table)
     file.close();
 }
 
+//从model中，读取表结构
 void readTable()
 {
     fstream file;
