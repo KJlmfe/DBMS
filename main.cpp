@@ -141,7 +141,7 @@ void writeTable(string tablename, int key, vector<Attribute> Table)
     file.write(tablename.c_str(), namesize); //写入表名
     file.write((char *) &key, 4); //写入主键数
     int number = Table.size();
-    file.write((char *) &number, 4); //写入属性数
+    file.write((char *) &number, 4); //写入属性数量
     for (vector<Attribute>::iterator p = Table.begin(); p != Table.end(); p++)
     {
         file.write(p->name.c_str(), namesize);
@@ -204,8 +204,6 @@ int main(int argc, char** argv)
 //    writeTable("person", 1, temp);
 //    readTable();
     table a;
-    
-    
     return 0;
 }
 
