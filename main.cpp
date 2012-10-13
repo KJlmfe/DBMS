@@ -68,7 +68,7 @@ public:
     
     void insert(char * data,vector<string> AttributesName)
     {
-        int size = getsize();
+        int size = getsize();//计算一条元组所占空间
         char * result = new char(size + 1);//建立空间，用来临时存放元组数据
         memset(result,0,size+1);//清空
         
