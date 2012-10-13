@@ -8,7 +8,7 @@
 using namespace std;
 #define namesize 20
 
-enum datatype
+enum DataType
 {
     INT, CHAR,DOUBLE
 };
@@ -19,16 +19,16 @@ class Attribute
 {
 public:
     string name;
-    datatype type;
+    DataType type;
     int size;
 
-    Attribute(string name, datatype type)
+    Attribute(string name, DataType type)
     {
         this->name = name;
         this->type = type;
     }
 
-    Attribute(string name, datatype type, int size)
+    Attribute(string name, DataType type, int size)
     {
         this->name = name;
         this->type = type;
@@ -37,72 +37,72 @@ public:
 };
 
 //表
-class table{
+class Table{
 public:
     string name;//表名
-    vector<Attribute> Attributes;//属性数组
-    table()
+    vector<Attribute> attributes;//属性数组
+    Table()
     {
         //测试数据
         name = "test";
-        Attributes.push_back(Attribute("name",CHAR,4));
-        Attributes.push_back(Attribute("phone",CHAR,5));
+        attributes.push_back(Attribute("name",CHAR,4));
+        attributes.push_back(Attribute("phone",CHAR,5));
         char temp[100] = {"namephoned"};
         vector<string> name;
         name.push_back("name");
 //        name.push_back("phone");
-        insert(temp,name);
+        insert_tuple(temp,name);
     }
     //计算一个元组占用的空间
-    int getsize()
+    int GetSize()
     {
         int size = 0;
-        for (int i = 0;i < Attributes.size();i++)
+        for (int i = 0;i < attributes.size();i++)
         {
-             size += Attributes[i].size;
+             size += attributes[i].size;
         }
         return size;
     }
     
-    //插入一个元组，AttributesName，是属性名数组，属性名顺序是任意的，data中，是属性对应的要插入的数据
+    //插入一个元组tuple，AttributesName，是属性名数组，属性名顺序是任意的，data中，是属性对应的要插入的数据
     
-    void insert(char * data,vector<string> AttributesName)
+    void insert_tuple(char * data,vector<string> attributes_name)
     {
-        int size = getsize();//计算一条元组所占空间
+        int size = GetSize();//计算一条元组所占空间
         char * result = new char(size + 1);//建立空间，用来临时存放元组数据
         memset(result,0,size+1);//清空
         
         //计算AttributesName中的元组所对应的数据，在char data中的位置
-        vector<int> datalocation;
+        vector<int> data_location;
         int temp = 0;
-        for (int i = 0;i < AttributesName.size();i++)
+        for (int i = 0;i < attributes_name.size();i++)
         {
-            datalocation.push_back(temp);
-            for (int j = 0;j < Attributes.size();j++)
-                if (Attributes[j].name == AttributesName[i])
+            data_location.push_back(temp);
+            for (int j = 0;j < attributes.size();j++)
+                if (attributes[j].name == attributes_name[i])
                 {
-                    temp += Attributes[j].size;
+                    temp += attributes[j].size;
                     break;
                 }
             
         }
    
-        int location = 0;//数据指针
+        int result_location = 0;//数据指针
         //写入删除位
         result[0] = 1;
-        location++;//移动数据指针
+        result_location++;//移动数据指针
       
-        for (int i = 0;i < Attributes.size();i++)
+        for (int i = 0;i < attributes.size();i++)
         {
             //数据为空的话，写入初始数据
-            switch (Attributes[i].type)
+            switch (attributes[i].type)
             {
             case INT:
 //                b = 0;
 //                memcpy(result+location,&b,sizeof(int));
                 break;
             case CHAR:
-                result[location] = '\0';
+                result[result_location] = '\0';
                 break;
             case DOUBLE:
 //                double a = 0;
@@ -112,14 +112,14 @@ public:
                 break;
             }
             //如果当前元组，包含要插入的数据，则将要插入的数据，从data中读取，写入result中
-            for (int j = 0;j < AttributesName.size();j++)
+            for (int j = 0;j < attributes_name.size();j++)
             {
-                if (AttributesName[j] == Attributes[i].name)
+                if (attributes_name[j] == attributes[i].name)
                 {
-                    memcpy(result+location,data+datalocation[j],Attributes[i].size);
+                    memcpy(result+result_location,data+data_location[j],attributes[i].size);
                 }
             }
-            location += Attributes[i].size;
+            result_location += attributes[i].size;
         }
         
         
@@ -133,19 +133,19 @@ public:
 };
 
 //将表结构，写入model中
-void writeTable(string tablename, int key, vector<Attribute> Table)
+void write_table(string tablename, int key, vector<Attribute> table)
 {
     fstream file;
     file.open("model.dat", ios::out | ios::app | ios::binary);
 
     file.write(tablename.c_str(), namesize); //写入表名
     file.write((char *) &key, 4); //写入主键数
-    int number = Table.size();
+    int number = table.size();
     file.write((char *) &number, 4); //写入属性数量
-    for (vector<Attribute>::iterator p = Table.begin(); p != Table.end(); p++)
+    for (vector<Attribute>::iterator p = table.begin(); p != table.end(); p++)
     {
         file.write(p->name.c_str(), namesize);
-        file.write((char *) &(p->type), sizeof (datatype));      
+        file.write((char *) &(p->type), sizeof (DataType));      
         if (p->type == CHAR)
             file.write((char *) &(p->size), 4);
     }
@@ -153,7 +153,7 @@ void writeTable(string tablename, int key, vector<Attribute> Table)
 }
 
 //从model中，读取表结构
-void readTable()
+void read_table()
 {
     fstream file;
     file.open("model.dat", ios::in | ios::binary);
@@ -173,11 +173,11 @@ void readTable()
         for (int i = 0; i < number; i++)
         {
             char attrlbutename[namesize];
-            datatype type;
+            DataType type;
             int size;
             file.read(attrlbutename, namesize);
             cout << attrlbutename << endl;
-            file.read((char *) &type, sizeof (datatype));
+            file.read((char *) &type, sizeof (DataType));
             cout << type << endl;
             if (type == CHAR)
             {
@@ -203,7 +203,7 @@ int main(int argc, char** argv)
 //    temp.push_back(Attribute("phone", INT));
 //    writeTable("person", 1, temp);
 //    readTable();
-    table a;
+    Table a;
     return 0;
 }
 
