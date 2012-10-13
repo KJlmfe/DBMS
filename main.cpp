@@ -8,6 +8,7 @@
 using namespace std;
 #define namesize 20
 
+//枚举数据类型
 enum DataType
 {
     INT, CHAR,DOUBLE
@@ -88,7 +89,7 @@ public:
         }
    
         int result_location = 0;//数据指针
-        //写入删除位
+        //写入删除位，0为已经删除，1为存在
         result[0] = 1;
         result_location++;//移动数据指针
       
