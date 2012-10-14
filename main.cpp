@@ -5,17 +5,20 @@
 #include <fstream>
 #include <map>
 #include <memory.h>
+#include <cstdlib>
 using namespace std;
 #define namesize 20
 
 //枚举数据类型
+
 enum DataType
 {
-    INT, CHAR,DOUBLE
+    INT, CHAR, DOUBLE
 };
 
 
 //属性
+
 class Attribute
 {
 public:
@@ -38,173 +41,282 @@ public:
 };
 
 //表
-class Table{
+
+class Table
+{
 public:
-    string name;//表名
-    vector<Attribute> attributes;//属性数组
+    string name; //表名
+    int key_num;
+    vector<Attribute> attributes; //属性数组
+
+    Table(string name, int keynumber, vector<Attribute> attributes)
+    {
+        this->name = name;
+        this->key_num = keynumber;
+        this->attributes = attributes;
+    }
+
     Table()
     {
         //测试数据
-        name = "test";
-        attributes.push_back(Attribute("name",CHAR,4));
-        attributes.push_back(Attribute("phone",CHAR,5));
-        char temp[100] = {"namephoned"};
-        vector<string> name;
-        name.push_back("name");
-//        name.push_back("phone");
-        insert_tuple(temp,name);
+//        name = "test";
+//        attributes.push_back(Attribute("name", CHAR, 4));
+//        attributes.push_back(Attribute("phone", CHAR, 5));
+//        vector<string> attri_name;
+//        vector<string> value;
+//        attri_name.push_back("name");
+//        value.push_back("Zhang");
+//        Insert(attri_name, value);
     }
-    //计算一个元组占用的空间
-    int GetSize()
+
+    //显示当前表结构
+    void describe()
     {
-        int size = 0;
-        for (int i = 0;i < attributes.size();i++)
+        cout << "*******************************" << endl;
+        cout << name << endl;
+        for (int i = 0; i < attributes.size(); i++)
         {
-             size += attributes[i].size;
+            cout << attributes[i].name << " ";
+            if (attributes[i].type == CHAR)
+            {
+                cout << "char(" << attributes[i].size << ")";
+            }
+            if (attributes[i].type == INT)
+            {
+                cout << "int";
+            }
+            cout << endl;
+        }
+        cout << "*******************************" << endl;
+    }
+
+    int getsize()
+    {
+        int size = 1;
+        for (int i = 0; i < attributes.size(); i++)
+        {
+            if (attributes[i].type == CHAR)
+                size += 1;
+            size += attributes[i].size;
         }
         return size;
     }
-    
-    //插入一个元组tuple，AttributesName，是属性名数组，属性名顺序是任意的，data中，是属性对应的要插入的数据
-    
-    void insert_tuple(char * data,vector<string> attributes_name)
+
+    //将从sql语句中读取的数据，转换成二进制数据，存放到string中
+    //attri为属性，value为数据
+
+    string binary(Attribute attri, string value)
     {
-        int size = GetSize();//计算一条元组所占空间
-        char * result = new char(size + 1);//建立空间，用来临时存放元组数据
-        memset(result,0,size+1);//清空
-        
-        //计算AttributesName中的元组所对应的数据，在char data中的位置
-        vector<int> data_location;
-        int temp = 0;
-        for (int i = 0;i < attributes_name.size();i++)
+        string output;
+        if (attri.type == CHAR)
         {
-            data_location.push_back(temp);
-            for (int j = 0;j < attributes.size();j++)
-                if (attributes[j].name == attributes_name[i])
-                {
-                    temp += attributes[j].size;
-                    break;
-                }
-            
+            output = value;
+            output.resize(attri.size + 1, '\0');
+            return output;
         }
-   
-        int result_location = 0;//数据指针
-        //写入删除位，0为已经删除，1为存在
-        result[0] = 1;
-        result_location++;//移动数据指针
-      
-        for (int i = 0;i < attributes.size();i++)
+
+        if (attri.type == INT)
         {
-            //数据为空的话，写入初始数据
-            switch (attributes[i].type)
-            {
-            case INT:
-//                b = 0;
-//                memcpy(result+location,&b,sizeof(int));
-                break;
-            case CHAR:
-                result[result_location] = '\0';
-                break;
-            case DOUBLE:
-//                double a = 0;
-//                memcpy(result+location,&a,sizeof(double));
-                break;    
-            default:
-                break;
-            }
-            //如果当前元组，包含要插入的数据，则将要插入的数据，从data中读取，写入result中
-            for (int j = 0;j < attributes_name.size();j++)
-            {
-                if (attributes_name[j] == attributes[i].name)
-                {
-                    memcpy(result+result_location,data+data_location[j],attributes[i].size);
-                }
-            }
-            result_location += attributes[i].size;
+            char * temp = new char(4);
+            int num = atoi(value.c_str());
+            memcpy(temp, &num, 4);
+            output.append(temp, 4);
+            delete temp;
+            return output;
         }
-        
-        
-        fstream file;
-        file.open(name.c_str(),ios::out | ios::app |ios::binary);
-        file.write(result,size + 1);
-        file.close();
-        
     }
-    
+
+    //写入对应属性的二进制空数据
+
+    string binary_empty(Attribute attri)
+    {
+        string output;
+        if (attri.type == CHAR)
+        {
+            output.resize(attri.size, '\0');
+            return output;
+        }
+
+        if (attri.type == INT)
+        {
+            char * temp = new char(4);
+            int num = 0;
+            memcpy(temp, &num, 4);
+            output.append(temp, 4);
+            delete temp;
+            return output;
+        }
+
+    }
+    //插入一个元组tuple，AttributesName，是属性名数组，属性名顺序是任意的，data中，是属性对应的要插入的数据
+    //insert into tablename 
+
+    void Insert(vector<string> attri_name, vector<string> value)
+    {
+        string result;
+        ////写入删除位，'0'为已经删除，'1'为存在
+        result += '1';
+        for (int i = 0; i < attributes.size(); i++)
+        {
+            //如果当前元组，包含要插入的数据，则将要插入的数据，从data中读取，写入result中
+            for (int j = 0; j < attri_name.size(); j++)
+            {
+                if (attri_name[j] == attributes[i].name)
+                {
+                    result += binary(attributes[i], value[j]);
+                }
+                else
+                    result += binary_empty(attributes[i]);
+            }
+        }
+
+        fstream file;
+        file.open(name.c_str(), ios::out | ios::app | ios::binary);
+        file.write(result.c_str(), result.size());
+        file.close();
+    }
+
+
+
+    //根据提供的属性名和属性值，进行查找，并删除对应列,属性值的类型，要结合attributes,自行判断
+    //对应delete语句：delete from tablename where attri_name = value
+
+    bool Delete(string attri_name, string value)
+    {
+
+    }
+
+    //更新操作，对应update语句：
+    //update tablename set attri_name2 = value2 where attri_name1 = value1
+
+    void update(string attri_name1, string value1, string attri_name2, string value2)
+    {
+
+    }
+
 };
 
 //将表结构，写入model中
-void write_table(string tablename, int key, vector<Attribute> table)
-{
-    fstream file;
-    file.open("model.dat", ios::out | ios::app | ios::binary);
 
-    file.write(tablename.c_str(), namesize); //写入表名
-    file.write((char *) &key, 4); //写入主键数
-    int number = table.size();
-    file.write((char *) &number, 4); //写入属性数量
-    for (vector<Attribute>::iterator p = table.begin(); p != table.end(); p++)
-    {
-        file.write(p->name.c_str(), namesize);
-        file.write((char *) &(p->type), sizeof (DataType));      
-        if (p->type == CHAR)
-            file.write((char *) &(p->size), 4);
-    }
-    file.close();
-}
+
 
 //从model中，读取表结构
-void read_table()
+
+class DataBase
 {
-    fstream file;
-    file.open("model.dat", ios::in | ios::binary);
- 
-    char name[namesize];
-    int keynumber;
-    int number;
+public:
+    vector<Table> tables;
 
-    while (file.peek() != EOF)
+    DataBase()
     {
-        file.read(name, namesize); //读取表名
-        cout << name << endl;
-        file.read((char *) &keynumber, 4);
-        cout << keynumber << endl;
-        file.read((char *) &number, 4);
-        cout << number << endl;
-        for (int i = 0; i < number; i++)
-        {
-            char attrlbutename[namesize];
-            DataType type;
-            int size;
-            file.read(attrlbutename, namesize);
-            cout << attrlbutename << endl;
-            file.read((char *) &type, sizeof (DataType));
-            cout << type << endl;
-            if (type == CHAR)
-            {
-                file.read((char *) &size, 4);
-                cout << size << endl;
-            }
-        }
-        cout << endl;
+        read_table();
     }
-    file.close();
+
+    //显示数据库中的所有表
+
+    void show_database()
+    {
+        for (int i = 0; i < tables.size(); i++)
+        {
+            tables[i].describe();
+        }
+    }
+
+    //从文件中读取表结构，初始化数据库
+
+    void read_table()
+    {
+        tables.clear();
+        fstream file;
+        file.open("model.dat", ios::in | ios::binary);
+
+        char name[namesize];
+        int key_num;
+        int number;
+        DataType type;
+        int type_size;
+
+        char attri_name[namesize];
+
+        while (file.peek() != EOF)
+        {
+            Table table;
+            file.read(name, namesize); //读取表名
+            table.name.append(name);
+
+            file.read((char *) &key_num, 4);
+            table.key_num = key_num;
+
+            file.read((char *) &number, 4);
+
+            for (int i = 0; i < number; i++)
+            {
+                file.read(attri_name, namesize);
+                file.read((char *) &type, sizeof (DataType));
+                if (type == CHAR)
+                {
+                    file.read((char *) &type_size, 4);
+                }
+                else
+                {
+                    type_size = 4;
+                }
+                table.attributes.push_back(Attribute(string(attri_name), type, type_size));
+            }
+            tables.push_back(table);
+
+        }
+        file.close();
+    }
 
 
+    //建立新表
 
+    void create_table(string table_name, int key_num, vector<Attribute> attributes)
+    {
+        //将新表写入内存
+        Table table;
+        table.name = table_name;
+        table.key_num = key_num;
+        table.attributes = attributes;
+        tables.push_back(table);
 
+        //将新表写入文件
+        fstream file;
+        file.open("model.dat", ios::out | ios::app | ios::binary);
 
-}
+        file.write(table_name.c_str(), namesize); //写入表名
+        file.write((char *) &key_num, 4); //写入主键数
+        int number = attributes.size();
+        file.write((char *) &number, 4); //写入属性数量
+        for (vector<Attribute>::iterator p = attributes.begin(); p != attributes.end(); p++)
+        {
+            file.write(p->name.c_str(), namesize);
+            file.write((char *) &(p->type), sizeof (DataType));
+            if (p->type == CHAR)
+                file.write((char *) &(p->size), 4);
+        }
+        file.close();
+    }
+
+};
 
 int main(int argc, char** argv)
 {
 
-//    vector<Attribute> temp;
-//    temp.push_back(Attribute("name", CHAR, 3));
-//    temp.push_back(Attribute("phone", INT));
-//    writeTable("person", 1, temp);
-//    readTable();
-    Table a;
+    //测试model
+    DataBase data;
+
+    vector<Attribute> temp;
+    temp.push_back(Attribute("name", CHAR, 3));
+    temp.push_back(Attribute("phone", INT));
+    data.create_table("person", 1, temp);
+
+    data.read_table();
+
+    data.show_database();
+
+
     return 0;
 }
 
