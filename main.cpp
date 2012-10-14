@@ -285,7 +285,7 @@ public:
         table.attributes = attributes;
         tables.push_back(table);
 
-        //将新表写入文件
+        //将新表写入文件.
         fstream file;
         file.open("model.dat", ios::out | ios::app | ios::binary);
 
