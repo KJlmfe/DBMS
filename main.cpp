@@ -59,16 +59,17 @@ public:
     Table()
     {
         //测试数据
-//        name = "test";
-//        attributes.push_back(Attribute("name", CHAR, 4));
-//        attributes.push_back(Attribute("phone", CHAR, 5));
-//        vector<string> attri_name;
-//        vector<string> value;
-//        attri_name.push_back("name");
-//        value.push_back("Zhang");
-//        Insert(attri_name, value);
+        //        name = "test";
+        //        attributes.push_back(Attribute("name", CHAR, 4));
+        //        attributes.push_back(Attribute("phone", CHAR, 5));
+        //        vector<string> attri_name;
+        //        vector<string> value;
+        //        attri_name.push_back("name");
+        //        value.push_back("Zhang");
+        //        Insert(attri_name, value);
     }
 
+ 
     //显示当前表结构
     void describe()
     {
@@ -153,21 +154,24 @@ public:
 
     void Insert(vector<string> attri_name, vector<string> value)
     {
-        string result;
-        ////写入删除位，'0'为已经删除，'1'为存在
+        string result;//存储最终二进制数据
+        //写入删除位，'0'为已经删除，'1'为存在
         result += '1';
         for (int i = 0; i < attributes.size(); i++)
         {
-            //如果当前元组，包含要插入的数据，则将要插入的数据，从data中读取，写入result中
-            for (int j = 0; j < attri_name.size(); j++)
+            int j;
+            //判断当前属性，是否为要插入的属性
+            for (j = 0; j < attri_name.size(); j++)
             {
                 if (attri_name[j] == attributes[i].name)
                 {
+                    //插入数据
                     result += binary(attributes[i], value[j]);
                 }
-                else
-                    result += binary_empty(attributes[i]);
             }
+            //当前属性不是要插入的数据，则插入空数据
+            if (j == attri_name.size())
+                result += binary_empty(attributes[i]);
         }
 
         fstream file;
