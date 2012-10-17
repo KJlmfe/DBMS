@@ -142,7 +142,20 @@ public:
 
     bool Delete(string attri_name, string value)
     {
+		vector<int> delete_queue;
+		delete_queue = search(string attri_name, string value);
 
+		fstream file;
+        file.open(name.c_str(), ios::out | ios::binary);
+
+		for (int i = 0; i < delete_queue.size(); i++)
+        {
+			offset = delete_queue[i] * get_record_size();
+			fseek(file, offset, SEEK_SET);  //将文件指针指向要删除记录的起始位
+        	file.write('0', 1);  //写入删除位，'0'为已经删除，'1'为存在
+        }
+
+        file.close();
     }
 
     //更新操作，对应update语句：
