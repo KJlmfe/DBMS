@@ -1,8 +1,16 @@
+#include <string>
+#include <vector>
+#include <iostream>
+
+#include "Attribute.h"
+
+using namespace std;
+
 class Table
 {
 public:
     string name; //表名
-    int key_num;  //主键个数(默认前key_num个是该表主键)
+    int key_num; //主键个数(默认前key_num个是该表主键)
     vector<Attribute> attributes; //属性数组
 
     Table(string name, int keynumber, vector<Attribute> attributes)
@@ -25,8 +33,9 @@ public:
         //        Insert(attri_name, value);
     }
 
- 
+
     //显示当前表结构
+
     void describe()
     {
         cout << "*******************************" << endl;
@@ -47,10 +56,11 @@ public:
         cout << "*******************************" << endl;
     }
 
-	//该表一条记录的固定大小
-   	int get_record_size()
+    //该表一条记录的固定大小
+
+    int get_record_size()
     {
-        int size = 1;  
+        int size = 1;
         for (int i = 0; i < attributes.size(); i++)
         {
             if (attributes[i].type == CHAR)
@@ -111,7 +121,7 @@ public:
 
     void Insert(vector<string> attri_name, vector<string> value)
     {
-        string result;//存储最终二进制数据
+        string result; //存储最终二进制数据
         //写入删除位，'0'为已经删除，'1'为存在
         result += '1';
         for (int i = 0; i < attributes.size(); i++)
@@ -140,6 +150,46 @@ public:
     //根据提供的属性名和属性值，进行查找，并删除对应列,属性值的类型，要结合attributes,自行判断
     //对应delete语句：delete from tablename where attri_name = value
 
+    vector<int> search(string attri_name, string value)
+    {
+        fstream file;
+        file.open(name.c_str(), ios::in | ios::binary);
+        file.seekg(0, ios::end);
+        int record_num = file.tellg() / get_record_size(); //计算元组总条数
+        Attribute attri;
+        vector<int> output;
+
+
+        int attri_p = 0;
+        int i;
+        for (i = 0; i < attributes.size(); i++)
+        {
+            if (attributes[i].name == attri_name)
+                break;
+            else
+                attri_p += attributes[i].size;
+        }
+        attri = attributes[i];
+
+        char * temp = new char(attri.size);
+        int record_size = get_record_size();
+
+
+        for (int i = 0; i < record_num; i++)
+        {
+            file.seekg(i*record_size, ios::beg);
+            file.seekg(attri_p, ios::cur);
+            file.read(temp, attri.size);
+            string data(temp, attri.size);
+
+            if (data == binary(attri, value))
+                output.push_back(i);
+        }
+
+        return output;
+
+    }
+
     bool Delete(string attri_name, string value)
     {
 
@@ -150,6 +200,7 @@ public:
 
     void update(string attri_name1, string value1, string attri_name2, string value2)
     {
+
 
     }
 
