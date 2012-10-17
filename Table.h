@@ -1,8 +1,18 @@
+/* 
+ * File:   Table.h
+ * Author: xiaose
+ *
+ * Created on 2012年10月17日, 下午5:14
+ */
+
+#ifndef TABLE_H
+#define	TABLE_H
 #include <string>
 #include <vector>
 #include <iostream>
-
+#include "define.h"
 #include "Attribute.h"
+#include <memory.h>
 
 using namespace std;
 
@@ -63,8 +73,6 @@ public:
         int size = 1;
         for (int i = 0; i < attributes.size(); i++)
         {
-            if (attributes[i].type == CHAR)
-                size += 1;
             size += attributes[i].size;
         }
         return size;
@@ -79,7 +87,7 @@ public:
         if (attri.type == CHAR)
         {
             output = value;
-            output.resize(attri.size + 1, '\0');
+            output.resize(attri.size, '\0');
             return output;
         }
 
@@ -121,6 +129,7 @@ public:
 
     void Insert(vector<string> attri_name, vector<string> value)
     {
+        cout << get_record_size() << endl;
         string result; //存储最终二进制数据
         //写入删除位，'0'为已经删除，'1'为存在
         result += '1';
@@ -134,6 +143,7 @@ public:
                 {
                     //插入数据
                     result += binary(attributes[i], value[j]);
+                    break;
                 }
             }
             //当前属性不是要插入的数据，则插入空数据
@@ -144,6 +154,7 @@ public:
         fstream file;
         file.open(name.c_str(), ios::out | ios::app | ios::binary);
         file.write(result.c_str(), result.size());
+        
         file.close();
     }
 
@@ -174,10 +185,13 @@ public:
         char * temp = new char(attri.size);
         int record_size = get_record_size();
 
-
+        char is_delete;
         for (int i = 0; i < record_num; i++)
         {
             file.seekg(i*record_size, ios::beg);
+            file.read(&is_delete, 1);
+            if (is_delete == '0')
+                continue;
             file.seekg(attri_p, ios::cur);
             file.read(temp, attri.size);
             string data(temp, attri.size);
@@ -192,17 +206,20 @@ public:
 
     bool Delete(string attri_name, string value)
     {
-		vector<int> delete_queue;
-		delete_queue = search(string attri_name, string value);
+        vector<int> delete_queue;
+        delete_queue = search(attri_name, value);
+        int offset;
+        fstream file;
+        file.open(name.c_str(), ios::out | ios::binary | ios::in);
 
-		fstream file;
-        file.open(name.c_str(), ios::out | ios::binary);
-
-		for (int i = 0; i < delete_queue.size(); i++)
+        char temp = '0';
+        for (int i = 0; i < delete_queue.size(); i++)
         {
-			offset = delete_queue[i] * get_record_size();
-			fseek(file, offset, SEEK_SET);  //将文件指针指向要删除记录的起始位
-        	file.write('0', 1);  //写入删除位，'0'为已经删除，'1'为存在
+            offset = delete_queue[i] * get_record_size();
+            file.seekg(offset, ios::beg);
+            //            fseek(file, offset, SEEK_SET); //将文件指针指向要删除记录的起始位
+
+            file.write(&temp, 1); //写入删除位，'0'为已经删除，'1'为存在
         }
 
         file.close();
@@ -213,10 +230,38 @@ public:
 
     void update(string attri_name1, string value1, string attri_name2, string value2)
     {
+        string result;
+        vector<int> search_result = search(attri_name1, value1);
 
+        int location = 1;
+        Attribute attri;
+        for (int i = 0; i < attributes.size(); i++)
+        {
+            if (attri_name2 == attributes[i].name)
+            {
+                attri = attributes[i];
+                break;
+            }
+            location += attributes[i].size;
+        }
 
+        fstream file;
+        file.open(name.c_str(), ios::out | ios::in | ios::binary);
+        int size = get_record_size();
+        for (int i = 0; i < search_result.size(); i++)
+        {
+            file.seekg(search_result[i] * size, ios::beg);
+            file.seekp(location, ios::cur);
+            result = binary(attri, value2);
+            file.write(result.c_str(), result.size());
+        }
+        file.close();
     }
 
 };
 
+
+
+
+#endif	/* TABLE_H */
 

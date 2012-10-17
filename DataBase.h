@@ -1,7 +1,21 @@
+/* 
+ * File:   DataBase.h
+ * Author: xiaose
+ *
+ * Created on 2012年10月17日, 下午5:14
+ */
+
+#ifndef DATABASE_H
+#define	DATABASE_H
+
+
+#include <memory.h>
+#include "Table.h"
+
 class DataBase
 {
 public:
-    vector<Table> tables;  //表集合
+    vector<Table> tables; //表集合
 
     DataBase()
     {
@@ -9,6 +23,7 @@ public:
     }
 
     //显示数据库中的所有表
+
     void show_database()
     {
         for (int i = 0; i < tables.size(); i++)
@@ -17,7 +32,13 @@ public:
         }
     }
 
+    void show_table(string name)
+    {
+
+    }
+
     //从文件中读取表结构，初始化数据库
+
     void read_table()
     {
         tables.clear();
@@ -48,6 +69,7 @@ public:
                 file.read(attri_name, NAMESIZE);
                 file.read((char *) &type, sizeof (DataType));
                 file.read((char *) &type_size, INTSIZE);
+
                 table.attributes.push_back(Attribute(string(attri_name), type, type_size));
             }
             tables.push_back(table);
@@ -77,6 +99,7 @@ public:
         file.write((char *) &number, INTSIZE); //写入属性数量
         for (vector<Attribute>::iterator p = attributes.begin(); p != attributes.end(); p++)
         {
+
             file.write(p->name.c_str(), NAMESIZE);
             file.write((char *) &(p->type), sizeof (DataType));
             file.write((char *) &(p->size), INTSIZE);
@@ -85,4 +108,9 @@ public:
     }
 
 };
+
+
+
+
+#endif	/* DATABASE_H */
 

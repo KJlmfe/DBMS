@@ -1,25 +1,27 @@
-enum DataType 	//枚举数据类型
-{
-    INT, CHAR, DOUBLE
-};
 
+#include "define.h"
+#include <string>
+#include <iostream>
+using namespace std;
 class Attribute
 {
 public:
-    string name;
+    string name;       
     DataType type;
     int size;
-
-    Attribute(string name, DataType type)
+    Attribute()
     {
-        this->name = name;
-        this->type = type;
+        
     }
 
-    Attribute(string name, DataType type, int size)
+
+    Attribute(string name,DataType type,int size)
     {
         this->name = name;
         this->type = type;
         this->size = size;
     }
+
 };
+
+
