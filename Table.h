@@ -1,0 +1,158 @@
+class Table
+{
+public:
+    string name; //表名
+    int key_num;  //主键个数(默认前key_num个是该表主键)
+    vector<Attribute> attributes; //属性数组
+
+    Table(string name, int keynumber, vector<Attribute> attributes)
+    {
+        this->name = name;
+        this->key_num = keynumber;
+        this->attributes = attributes;
+    }
+
+    Table()
+    {
+        //测试数据
+        //        name = "test";
+        //        attributes.push_back(Attribute("name", CHAR, INTSIZE));
+        //        attributes.push_back(Attribute("phone", CHAR, 5));
+        //        vector<string> attri_name;
+        //        vector<string> value;
+        //        attri_name.push_back("name");
+        //        value.push_back("Zhang");
+        //        Insert(attri_name, value);
+    }
+
+ 
+    //显示当前表结构
+    void describe()
+    {
+        cout << "*******************************" << endl;
+        cout << name << endl;
+        for (int i = 0; i < attributes.size(); i++)
+        {
+            cout << attributes[i].name << " ";
+            if (attributes[i].type == CHAR)
+            {
+                cout << "char(" << attributes[i].size << ")";
+            }
+            if (attributes[i].type == INT)
+            {
+                cout << "int";
+            }
+            cout << endl;
+        }
+        cout << "*******************************" << endl;
+    }
+
+	//该表一条记录的固定大小
+   	int get_record_size()
+    {
+        int size = 1;  
+        for (int i = 0; i < attributes.size(); i++)
+        {
+            if (attributes[i].type == CHAR)
+                size += 1;
+            size += attributes[i].size;
+        }
+        return size;
+    }
+
+    //将从sql语句中读取的数据，转换成二进制数据，存放到string中
+    //attri为属性，value为数据
+
+    string binary(Attribute attri, string value)
+    {
+        string output;
+        if (attri.type == CHAR)
+        {
+            output = value;
+            output.resize(attri.size + 1, '\0');
+            return output;
+        }
+
+        if (attri.type == INT)
+        {
+            char * temp = new char(INTSIZE);
+            int num = atoi(value.c_str());
+            memcpy(temp, &num, INTSIZE);
+            output.append(temp, INTSIZE);
+            delete temp;
+            return output;
+        }
+    }
+
+    //写入对应属性的二进制空数据
+
+    string binary_empty(Attribute attri)
+    {
+        string output;
+        if (attri.type == CHAR)
+        {
+            output.resize(attri.size, '\0');
+            return output;
+        }
+
+        if (attri.type == INT)
+        {
+            char * temp = new char(INTSIZE);
+            int num = 0;
+            memcpy(temp, &num, INTSIZE);
+            output.append(temp, INTSIZE);
+            delete temp;
+            return output;
+        }
+
+    }
+    //插入一个元组tuple，AttributesName，是属性名数组，属性名顺序是任意的，data中，是属性对应的要插入的数据
+    //insert into tablename 
+
+    void Insert(vector<string> attri_name, vector<string> value)
+    {
+        string result;//存储最终二进制数据
+        //写入删除位，'0'为已经删除，'1'为存在
+        result += '1';
+        for (int i = 0; i < attributes.size(); i++)
+        {
+            int j;
+            //判断当前属性，是否为要插入的属性
+            for (j = 0; j < attri_name.size(); j++)
+            {
+                if (attri_name[j] == attributes[i].name)
+                {
+                    //插入数据
+                    result += binary(attributes[i], value[j]);
+                }
+            }
+            //当前属性不是要插入的数据，则插入空数据
+            if (j == attri_name.size())
+                result += binary_empty(attributes[i]);
+        }
+
+        fstream file;
+        file.open(name.c_str(), ios::out | ios::app | ios::binary);
+        file.write(result.c_str(), result.size());
+        file.close();
+    }
+
+    //根据提供的属性名和属性值，进行查找，并删除对应列,属性值的类型，要结合attributes,自行判断
+    //对应delete语句：delete from tablename where attri_name = value
+
+    bool Delete(string attri_name, string value)
+    {
+
+    }
+
+    //更新操作，对应update语句：
+    //update tablename set attri_name2 = value2 where attri_name1 = value1
+
+    void update(string attri_name1, string value1, string attri_name2, string value2)
+    {
+
+    }
+
+};
+
+
