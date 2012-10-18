@@ -11,7 +11,7 @@
 
 #include <memory.h>
 #include "Table.h"
-
+#include "Condition.h"
 class DataBase
 {
 public:
