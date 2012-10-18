@@ -12,6 +12,7 @@
 #include <memory.h>
 #include "Table.h"
 #include "Condition.h"
+
 class DataBase
 {
 public:
@@ -116,7 +117,7 @@ public:
     }
     
     //投影操作，name为需要操作的文件名，attri为需要投影的属性
-    void Projection(string name,vector<Attribute> attri)
+    void Projection(vector<Attribute> attri_full,vector<Attribute> attri)
     {
         
     }
@@ -130,7 +131,7 @@ public:
     }
     
     //显示temp的内容，attri为temp中包含的属性
-    void Display(vector<Attribute> attri)
+    void Display(Table table)    
     {
         
     }
