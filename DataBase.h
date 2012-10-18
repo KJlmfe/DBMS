@@ -106,6 +106,34 @@ public:
         }
         file.close();
     }
+    
+    //等值连接
+    //sql:select * from name1,name2 where name1.attri1 = name2.attri2;
+    //其中l1,l2为两表，参与连接的元组所在行
+    void Equi_Join(string name1,string name2,vector<int> l1,vector<int>l2,Attribute attri1,Attribute attri2)
+    {
+        
+    }
+    
+    //投影操作，name为需要操作的文件名，attri为需要投影的属性
+    void Projection(string name,vector<Attribute> attri)
+    {
+        
+    }
+    
+    //选择操作
+    //taboe_name,为涉及的表名，projection,为最后需要显示的属性，join为等值连接操作，condition为查询条件
+    
+    void Select(vector<string> table_name,vector<Table> projection,vector<Table> join,vector<Condition> condition)
+    {
+        
+    }
+    
+    //显示temp的内容，attri为temp中包含的属性
+    void Display(vector<Attribute> attri)
+    {
+        
+    }
 
 };
 

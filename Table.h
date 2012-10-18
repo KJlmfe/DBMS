@@ -161,7 +161,7 @@ public:
     //根据提供的属性名和属性值，进行查找，并删除对应列,属性值的类型，要结合attributes,自行判断
     //对应delete语句：delete from tablename where attri_name = value
 
-    vector<int> search(string attri_name, string value)
+    vector<int> search(string attri_name, char type,string value)
     {
         fstream file;
         file.open(name.c_str(), ios::in | ios::binary);
