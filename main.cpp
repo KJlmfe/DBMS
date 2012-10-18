@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     value.push_back("1353");
     data.tables[0].Insert(attri, value);
     data.tables[0].Delete("name","JKKK");
-//    data.tables[0].update("phone","1353","name","JKKK");
+    data.tables[0].update("phone","1353","name","JKKK");
     return 0;
 }
 
