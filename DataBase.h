@@ -116,7 +116,7 @@ public:
         
     }
     
-    //投影操作，name为需要操作的文件名，attri为需要投影的属性
+    //投影操作，name为需要操作的文件名，attri为需要投影的那些属性
     void Projection(vector<Attribute> attri_full,vector<Attribute> attri)
     {
         
