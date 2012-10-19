@@ -283,46 +283,7 @@ public:
 
     void Projection(vector<Attribute> attri_full, vector<int> P)
     {
-        fstream file1, file2;
-        int i = 0;
-        int j = 0;
-        string result, temp;
-        int location_v = 1;
-        cout << "234422" << endl;
-        int fullsize = 0;
-        int size = 0;
-        for (i = 0; i < attri_full.size(); i++)
-            fullsize += attri_full[i].size;
-        for (i = 0; i < P.size(); i++)
-            size += attri_full[P[i]].size;
-        file1.open("person", ios::in | ios::binary);
-        file2.open("temp2", ios::out | ios::binary);
-        vector<int>location_h;
-        for (i = 0; i < location_h.size(); i++)
-            cout << i << "abc" << endl;
-        for (i = 0; i < P.size(); i++)
-        {
-            location_h.push_back(0);
-            for (j = 0; j < P[i]; j++)
-                location_h[i] += attri_full[j].size;
-        }
-        //        file1.seekg(0, ios::beg);
-        while (file1.peek() != EOF)
-        {
-
-            for (i = 0; i < P.size(); i++)
-            {
-                file1.seekg(location_v + location_h[i], ios::beg);
-                file1.read((char *) &temp, attri_full[P[i]].size);
-                result.append(temp);
-            }
-            file2.write(result.c_str(), size);
-            result.clear();
-            location_v += fullsize;
-            file1.seekg(location_v, ios::beg);
-        }
-        file1.close();
-        file2.close();
+       
     }
 
     //选择操作
