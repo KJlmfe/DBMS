@@ -287,7 +287,7 @@ public:
         int j = 0;
         string result, temp;
         int location_v = 1;
-        cout << "234422" << endl;
+        
         int fullsize = 0;
         int size = 1;
         for (i = 0; i < attri_full.size(); i++)
@@ -297,8 +297,7 @@ public:
         file1.open("person", ios::in | ios::binary);
         file2.open("temp2", ios::out | ios::binary);
         vector<int>location_h;
-        for (i = 0; i < location_h.size(); i++)
-            cout << i << "abc" << endl;
+      
         for (i = 0; i < P.size(); i++)
         {
             location_h.push_back(0);
