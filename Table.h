@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <sstream>
 #include "define.h"
 #include "Attribute.h"
 #include <memory.h>
@@ -82,7 +83,26 @@ public:
     //将从sql语句中读取的数据，转换成二进制数据，存放到string中
     //attri为属性，value为数据
 
-    string binary(Attribute attri, string value)
+    string binary_to_string(Attribute attri, string value)
+    {
+        string output;
+        if (attri.type == INT)
+        {
+            int num;
+            memcpy(&num, value.c_str(), INTSIZE);
+            stringstream ss;
+            string str;
+            ss << num;
+            ss >> output;
+            return output;
+        }
+
+        if (attri.type == CHAR)
+            return value;
+
+    }
+
+    string string_to_binary(Attribute attri, string value)
     {
         string output;
         if (attri.type == CHAR)
@@ -105,7 +125,7 @@ public:
 
     //写入对应属性的二进制空数据
 
-    string binary_empty(Attribute attri)
+    string string_to_empty_binary(Attribute attri)
     {
         string output;
         if (attri.type == CHAR)
@@ -130,7 +150,6 @@ public:
 
     void Insert(vector<string> attri_name, vector<string> value)
     {
-        cout << get_record_size() << endl;
         string result; //存储最终二进制数据
         //写入删除位，'0'为已经删除，'1'为存在
         result += '1';
@@ -143,19 +162,19 @@ public:
                 if (attri_name[j] == attributes[i].name)
                 {
                     //插入数据
-                    result += binary(attributes[i], value[j]);
+                    result += string_to_binary(attributes[i], value[j]);
                     break;
                 }
             }
             //当前属性不是要插入的数据，则插入空数据
             if (j == attri_name.size())
-                result += binary_empty(attributes[i]);
+                result += string_to_empty_binary(attributes[i]);
         }
 
         fstream file;
         file.open(name.c_str(), ios::out | ios::app | ios::binary);
         file.write(result.c_str(), result.size());
-        
+
         file.close();
     }
 
@@ -164,51 +183,51 @@ public:
 
     vector<int> search(Condition condition)
     {
-//        fstream file;
-//        file.open(name.c_str(), ios::in | ios::binary);
-//        file.seekg(0, ios::end);
-//        int record_num = file.tellg() / get_record_size(); //计算元组总条数
-//        Attribute attri;
-//        vector<int> output;
-//
-//
-//        int attri_p = 0;
-//        int i;
-//        for (i = 0; i < attributes.size(); i++)
-//        {
-//            if (attributes[i].name == attri_name)
-//                break;
-//            else
-//                attri_p += attributes[i].size;
-//        }
-//        attri = attributes[i];
-//
-//        char * temp = new char(attri.size);
-//        int record_size = get_record_size();
-//
-//        char is_delete;
-//        for (int i = 0; i < record_num; i++)
-//        {
-//            file.seekg(i*record_size, ios::beg);
-//            file.read(&is_delete, 1);
-//            if (is_delete == '0')
-//                continue;
-//            file.seekg(attri_p, ios::cur);
-//            file.read(temp, attri.size);
-//            string data(temp, attri.size);
-//
-//            if (data == binary(attri, value))
-//                output.push_back(i);
-//        }
-//
-//        return output;
+                fstream file;
+                file.open(name.c_str(), ios::in | ios::binary);
+                file.seekg(0, ios::end);
+                int record_num = file.tellg() / get_record_size(); //计算元组总条数
+                Attribute attri;
+                vector<int> output;
+        
+        
+                int attri_p = 0;
+                int i;
+                for (i = 0; i < attributes.size(); i++)
+                {
+                    if (attributes[i].name == attri_name)
+                        break;
+                    else
+                        attri_p += attributes[i].size;
+                }
+                attri = attributes[i];
+        
+                char * temp = new char(attri.size);
+                int record_size = get_record_size();
+        
+                char is_delete;
+                for (int i = 0; i < record_num; i++)
+                {
+                    file.seekg(i*record_size, ios::beg);
+                    file.read(&is_delete, 1);
+                    if (is_delete == '0')
+                        continue;
+                    file.seekg(attri_p, ios::cur);
+                    file.read(temp, attri.size);
+                    string data(temp, attri.size);
+        
+                    if (data == binary(attri, value))
+                        output.push_back(i);
+                }
+        
+                return output;
 
     }
 
     bool Delete(string attri_name, string value)
     {
         vector<int> delete_queue;
-        delete_queue = search(Condition(attri_name, '=',value));
+        delete_queue = search(Condition(attri_name, '=', value));
         int offset;
         fstream file;
         file.open(name.c_str(), ios::out | ios::binary | ios::in);
@@ -232,7 +251,7 @@ public:
     void update(string attri_name1, string value1, string attri_name2, string value2)
     {
         string result;
-        vector<int> search_result = search(Condition(attri_name1, '=',value1));
+        vector<int> search_result = search(Condition(attri_name1, '=', value1));
 
         int location = 1;
         Attribute attri;
@@ -253,12 +272,39 @@ public:
         {
             file.seekg(search_result[i] * size, ios::beg);
             file.seekp(location, ios::cur);
-            result = binary(attri, value2);
+            result = string_to_binary(attri, value2);
             file.write(result.c_str(), result.size());
         }
         file.close();
     }
 
+    void show_table()
+    {
+        for (int i = 0; i < attributes.size(); i++)
+        {
+            cout << attributes[i].name << "  ";
+        }
+        cout << endl;
+
+        fstream file;
+        file.open(name.c_str(), ios::in | ios::binary);
+
+        char *temp = new char(get_record_size());
+
+        while (file.peek() != EOF)
+        {
+            file.read(temp,1);
+            for (int i = 0; i < attributes.size(); i++)
+            {
+                file.read(temp, attributes[i].size);
+                string data(temp, attributes[i].size);
+                cout << binary_to_string(attributes[i],data) << " ";
+            }
+            cout << endl;
+        }
+        delete temp;
+        file.close();
+    }
 };
 
 
