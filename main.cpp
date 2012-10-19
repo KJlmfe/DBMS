@@ -49,16 +49,18 @@ int main(int argc, char** argv)
     vector<int> query;
     query.push_back(1);
     query.push_back(0);
+    query.push_back(2);
 
     data.tables[0].show_table();
     data.tables[1].show_table();
-    data.Equi_Join(data.tables[0], data.tables[1], query, query);
-    //    data.Equi_Join(data.tables[0],data.tables[1],query,query,Attribute("name", CHAR, 4),Attribute("name", CHAR, 4));
-    data.tables[0].name = "temp";
-
-    temp2.push_back(Attribute("phone", CHAR, 4));
-    data.tables[0].attributes = temp2;
-    data.temp_table.show_table();
+    
+    data.Equi_Join(data.tables[0], data.tables[1], query, query, Attribute("name", CHAR, 4), Attribute("name", CHAR, 4)).show_table();
+    //    data.tables[0].name = "temp";
+    //
+    //    temp2.push_back(Attribute("phone", CHAR, 4));
+    //    data.tables[0].attributes = temp2;
+    //    data.temp_table.show_table();
+       
 
     //    data.tables[0].Delete("name","JKKK");
     //    data.tables[0].update("phone","1353","name","JKKK");

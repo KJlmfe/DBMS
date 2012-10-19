@@ -183,50 +183,56 @@ public:
 
     vector<int> search(Condition condition)
     {
-                fstream file;
-                file.open(name.c_str(), ios::in | ios::binary);
-                file.seekg(0, ios::end);
-                int record_num = file.tellg() / get_record_size(); //计算元组总条数
-                Attribute attri;
-                vector<int> output;
         
-        
-                int attri_p = 0;
-                int i;
-                for (i = 0; i < attributes.size(); i++)
-                {
-                    if (attributes[i].name == attri_name)
-                        break;
-                    else
-                        attri_p += attributes[i].size;
-                }
-                attri = attributes[i];
-        
-                char * temp = new char(attri.size);
-                int record_size = get_record_size();
-        
-                char is_delete;
-                for (int i = 0; i < record_num; i++)
-                {
-                    file.seekg(i*record_size, ios::beg);
-                    file.read(&is_delete, 1);
-                    if (is_delete == '0')
-                        continue;
-                    file.seekg(attri_p, ios::cur);
-                    file.read(temp, attri.size);
-                    string data(temp, attri.size);
-        
-                    if (data == binary(attri, value))
-                        output.push_back(i);
-                }
-        
-                return output;
+    }
+    
+    vector<int> search(vector<Condition> condition)
+    {
+//                fstream file;
+//                file.open(name.c_str(), ios::in | ios::binary);
+//                file.seekg(0, ios::end);
+//                int record_num = file.tellg() / get_record_size(); //计算元组总条数
+//                Attribute attri;
+//                vector<int> output;
+//        
+//        
+//                int attri_p = 0;
+//                int i;
+//                for (i = 0; i < attributes.size(); i++)
+//                {
+//                    if (attributes[i].name == attri_name)
+//                        break;
+//                    else
+//                        attri_p += attributes[i].size;
+//                }
+//                attri = attributes[i];
+//        
+//                char * temp = new char(attri.size);
+//                int record_size = get_record_size();
+//        
+//                char is_delete;
+//                for (int i = 0; i < record_num; i++)
+//                {
+//                    file.seekg(i*record_size, ios::beg);
+//                    file.read(&is_delete, 1);
+//                    if (is_delete == '0')
+//                        continue;
+//                    file.seekg(attri_p, ios::cur);
+//                    file.read(temp, attri.size);
+//                    string data(temp, attri.size);
+//        
+//                    if (data == binary(attri, value))
+//                        output.push_back(i);
+//                }
+//        
+//                return output;
 
     }
 
     bool Delete(string attri_name, string value)
     {
         vector<int> delete_queue;
+        
         delete_queue = search(Condition(attri_name, '=', value));
         int offset;
         fstream file;
