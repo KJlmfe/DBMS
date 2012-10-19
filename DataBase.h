@@ -111,7 +111,6 @@ public:
     //sql:select * from name1,name2 where name1.attri1 = name2.attri2;
     //其中l1,l2为两表，参与连接的元组所在行
 
-    
     int Equi_Join(Table table1, Table table2, vector<int> l1, vector<int>l2)
     {
 
@@ -136,7 +135,7 @@ public:
         file1.open(table1.name.c_str(), ios::in | ios::binary);
         file2.open(table2.name.c_str(), ios::in | ios::binary);
         temp.open("temp", ios::out | ios::binary);
-        
+
         int newsize = table1.get_record_size() + table2.get_record_size() - 1;
 
         char * record = new char(newsize);
@@ -283,8 +282,50 @@ public:
 
     void Projection(vector<Attribute> attri_full, vector<int> P)
     {
-       
+        fstream file1, file2;
+        int i = 0;
+        int j = 0;
+        string result, temp;
+        int location_v = 1;
+        cout << "234422" << endl;
+        int fullsize = 0;
+        int size = 1;
+        for (i = 0; i < attri_full.size(); i++)
+            fullsize += attri_full[i].size;
+        for (i = 0; i < P.size(); i++)
+            size += attri_full[P[i]].size;
+        file1.open("person", ios::in | ios::binary);
+        file2.open("temp2", ios::out | ios::binary);
+        vector<int>location_h;
+        for (i = 0; i < location_h.size(); i++)
+            cout << i << "abc" << endl;
+        for (i = 0; i < P.size(); i++)
+        {
+            location_h.push_back(0);
+            for (j = 0; j < P[i]; j++)
+                location_h[i] += attri_full[j].size;
+        }
+        file1.seekg(location_v, ios::beg);
+        while (file1.peek() != EOF)
+        {
+            result.append("1");
+            for (i = 0; i < P.size(); i++)
+            {
+                char *temp = new char[attri_full[P[i]].size];
+                file1.seekg(location_v + location_h[i], ios::beg);
+                file1.read(temp, attri_full[P[i]].size);
+                result.append(temp, attri_full[P[i]].size);
+            }
+            file2.write(result.c_str(), size);
+            result.clear();
+            location_v += fullsize;
+            location_v++;
+            file1.seekg(location_v, ios::beg);
+        }
+        file1.close();
+        file2.close();
     }
+
 
     //选择操作
     //taboe_name,为涉及的表名，projection,为最后需要显示的属性，join为等值连接操作，condition为查询条件
