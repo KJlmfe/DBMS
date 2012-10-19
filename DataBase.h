@@ -90,6 +90,7 @@ public:
 
     void create_table(string table_name, int key_num, vector<Attribute> attributes)
     {
+        cout << table_name << endl;
         //将新表写入内存
         Table table;
         table.name = table_name;
@@ -107,6 +108,7 @@ public:
         file.write((char *) &number, INTSIZE); //写入属性数量
         for (vector<Attribute>::iterator p = attributes.begin(); p != attributes.end(); p++)
         {
+            cout << p->name << endl;
 
             file.write(p->name.c_str(), NAMESIZE);
             file.write((char *) &(p->type), sizeof (DataType));
@@ -356,6 +358,7 @@ public:
 
     void Select(vector<Table> tables, vector<Attribute> projection, vector<Table> join, vector<Condition> conditions)
     {
+        Table temp_table;
         vector<int> P;
         map<string, vector<Condition> > table_condition; //table和condition的映射
         map<string, Table> find_table; //table名和table的映射
@@ -405,11 +408,27 @@ public:
         }
 
 
-        for (int i = 0; i < tables.size(); i++)
+        if (join.size() > 0)
         {
-            vector<int> l1 = tables[i].search(table_condition[tables[i].name]);
-            vector<int> l2;
-            temp_table = Equi_Join(temp_table, tables[i], l2, l1);
+            for (int i = 0; i < tables.size(); i++)
+            {
+                vector<int> l1 = tables[i].search(table_condition[tables[i].name]);
+                vector<int> l2;
+                temp_table = Equi_Join(temp_table, tables[i], l2, l1);
+            }
+        }
+        else
+        {      
+            if (tables.size() > 0)
+            {
+                temp_table = tables[0];
+                for (int i = 0; i < tables.size(); i++)
+                {
+                    vector<int> l1 = tables[i].search(table_condition[tables[i].name]);
+                    vector<int> l2;
+                    temp_table = Equi_Join(temp_table, tables[i], l2, l1);
+                }
+            }
         }
 
         for (int i = 0; i < temp_table.attributes.size(); i++)
