@@ -173,8 +173,8 @@ public:
         {
             table.attributes.push_back(table2.attributes[i]);
         }
-        
-        rename("temp/temp1","temp/temp");
+
+        rename("temp/temp1", "temp/temp");
         table.name = "temp/temp";
         return table;
     }
@@ -282,15 +282,15 @@ public:
         delete record;
 
 
-       
+
         table.attributes = table1.attributes;
         for (int i = 0; i < table2.attributes.size(); i++)
         {
             if (table2.attributes[i].name != attri2.name)
                 table.attributes.push_back(table2.attributes[i]);
         }
-      
-        rename("temp/temp1","temp/temp");
+
+        rename("temp/temp1", "temp/temp");
         table.name = "temp/temp";
         return table;
 
@@ -315,9 +315,11 @@ public:
         file1.open("temp/temp", ios::in | ios::binary);
         file2.open("temp/temp1", ios::out | ios::binary);
         vector<int>location_h;
+        vector<Attribute> attributes;
 
         for (i = 0; i < P.size(); i++)
         {
+            attributes.push_back(attri_full[P[i]]);
             location_h.push_back(0);
             for (j = 0; j < P[i]; j++)
                 location_h[i] += attri_full[j].size;
@@ -341,31 +343,36 @@ public:
         }
         file1.close();
         file2.close();
+        rename("temp/temp1", "temp/temp");
+
+        Table temp_table("temp/temp", 0, attributes);
+        return temp_table;
     }
+
 
 
     //选择操作
     //table_name,为涉及的表名，projection,为最后需要显示的属性，join为等值连接操作，condition为查询条件
-   
+
     void Select(vector<Table> tables, vector<Attribute> projection, vector<Table> join, vector<Condition> conditions)
     {
-        vector<int> P;        
-        map<string,vector<Condition> > table_condition;//table和condition的映射
-        map<string,Table> find_table;//table名和table的映射
-        for (int i = 0;i < conditions.size();i++)
+        vector<int> P;
+        map<string, vector<Condition> > table_condition; //table和condition的映射
+        map<string, Table> find_table; //table名和table的映射
+        for (int i = 0; i < conditions.size(); i++)
         {
             table_condition[conditions[i].table_name].push_back(conditions[i]);
         }
-        
-        for (int i = 0;i < tables.size();i++)
+
+        for (int i = 0; i < tables.size(); i++)
         {
             find_table[tables[i].name] = tables[i];
         }
-        
+
         //为所有属性的前面加上表名
-        for (int i = 0;i < tables.size();i++)
+        for (int i = 0; i < tables.size(); i++)
         {
-            for (int j = 0;j < tables[i].attributes.size();j++)
+            for (int j = 0; j < tables[i].attributes.size(); j++)
             {
                 tables[i].attributes[j].name = tables[i].name + "." + tables[i].attributes[j].name;
             }
@@ -377,7 +384,7 @@ public:
             {
                 vector<int> l1, l2;
                 l1 = temp_table.search(table_condition[join[i * 2].name]);
-                l2 = join[i * 2 + 1].search(table_condition[join[i * 2+1].name]);
+                l2 = join[i * 2 + 1].search(table_condition[join[i * 2 + 1].name]);
                 temp_table = Equi_Join(temp_table, find_table[join[i * 2 + 1].name], l1, l2, join[i * 2].attributes[0], join[i * 2 + 1].attributes[0]);
             }
         }
@@ -396,28 +403,26 @@ public:
             if (is_delete)
                 ++p;
         }
-        
-      
-        for (int i = 0;i < tables.size();i++)
+
+
+        for (int i = 0; i < tables.size(); i++)
         {
-            vector<int> l1 = tables[i].search(table_condition[tables[i].name]); 
+            vector<int> l1 = tables[i].search(table_condition[tables[i].name]);
             vector<int> l2;
-            temp_table = Equi_Join(temp_table,tables[i],l2,l1);            
+            temp_table = Equi_Join(temp_table, tables[i], l2, l1);
         }
-        
-        for (int i = 0;i < temp_table.attributes.size();i++)
+
+        for (int i = 0; i < temp_table.attributes.size(); i++)
         {
-            for (int j = 0;j < projection.size();j++)
+            for (int j = 0; j < projection.size(); j++)
                 if (temp_table.attributes[i].name == projection[j].name)
                 {
                     P.push_back(i);
                     break;
                 }
         }
-        temp_table = Projection(temp_table.attributes,P);
+        temp_table = Projection(temp_table.attributes, P);
         temp_table.show_table();
-   
-
     }
 
     //显示temp的内容，attri为temp中包含的属性

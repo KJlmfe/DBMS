@@ -183,56 +183,85 @@ public:
 
     vector<int> search(Condition condition)
     {
-        
+
     }
-    
+
     vector<int> search(vector<Condition> condition)
     {
-//                fstream file;
-//                file.open(name.c_str(), ios::in | ios::binary);
-//                file.seekg(0, ios::end);
-//                int record_num = file.tellg() / get_record_size(); //计算元组总条数
-//                Attribute attri;
-//                vector<int> output;
-//        
-//        
-//                int attri_p = 0;
-//                int i;
-//                for (i = 0; i < attributes.size(); i++)
-//                {
-//                    if (attributes[i].name == attri_name)
-//                        break;
-//                    else
-//                        attri_p += attributes[i].size;
-//                }
-//                attri = attributes[i];
-//        
-//                char * temp = new char(attri.size);
-//                int record_size = get_record_size();
-//        
-//                char is_delete;
-//                for (int i = 0; i < record_num; i++)
-//                {
-//                    file.seekg(i*record_size, ios::beg);
-//                    file.read(&is_delete, 1);
-//                    if (is_delete == '0')
-//                        continue;
-//                    file.seekg(attri_p, ios::cur);
-//                    file.read(temp, attri.size);
-//                    string data(temp, attri.size);
-//        
-//                    if (data == binary(attri, value))
-//                        output.push_back(i);
-//                }
-//        
-//                return output;
+        fstream file;
+        int i, j;
+        file.open(name.c_str(), ios::in | ios::binary);
+        file.seekg(0, ios::end);
+        int record_num = file.tellg() / get_record_size(); //计算元组总条数            
+        vector<int> output;
+        vector<int> attri_p;
+        vector<Attribute> attri;
+        int temp = 0;
+        for (j = 0; j < condition.size(); j++)
+        {
+            for (i = 0; i < attributes.size(); i++)
+            {
+                if (attributes[i].name == condition[j].attri_name)
+                    break;
+                else
+                    temp += attributes[i].size;
+            }
+            attri.push_back(attributes[i]);
+            attri_p.push_back(temp);
+            temp = 0;
+        }
+
+        int record_size = get_record_size();
+
+        char is_delete;
+        int x;
+        int location_v = 0;
+        for (i = 0; i < record_num; i++)
+        {
+            bool matched = true;
+            file.seekg(location_v, ios::beg);
+            file.read(&is_delete, 1);
+            if (is_delete == '0')
+                continue;
+            for (j = 0; j < condition.size(); j++)
+            {
+                x = location_v + attri_p[j] + 1;
+                file.seekg(x, ios::beg);
+                char *temp = new char(attri[j].size);
+                file.read(temp, attri[j].size);
+                //                string data(temp, attri[j].size);
+                int ope_result = strncmp(temp, condition[j].value.c_str(), attri[j].size);
+                switch (condition[j].operate)
+                {
+                case '=':
+                    if (ope_result != 0)
+                        matched = false;
+                    break;
+                case '>':
+                    if (ope_result <= 0)
+                        matched = false;
+                    break;
+                case '<':
+                    if (ope_result >= 0)
+                        matched = false;
+                    break;
+                default:
+                    break;
+                }
+            }
+            if (matched)
+                output.push_back(i);
+            location_v += record_size;
+        }
+
+        return output;
 
     }
 
     bool Delete(string attri_name, string value)
     {
         vector<int> delete_queue;
-        
+
         delete_queue = search(Condition(attri_name, '=', value));
         int offset;
         fstream file;
@@ -299,12 +328,12 @@ public:
 
         while (file.peek() != EOF)
         {
-            file.read(temp,1);
+            file.read(temp, 1);
             for (int i = 0; i < attributes.size(); i++)
             {
                 file.read(temp, attributes[i].size);
                 string data(temp, attributes[i].size);
-                cout << binary_to_string(attributes[i],data) << " ";
+                cout << binary_to_string(attributes[i], data) << " ";
             }
             cout << endl;
         }
