@@ -9,13 +9,17 @@
 #define	DEFINE_H
 #define INTSIZE 4
 #define NAMESIZE 20
-#include <iostream>
+
+
+using namespace std;
 
 
 enum DataType //枚举数据类型
 {
     INT, CHAR, DOUBLE
 };
+
+
 
 #endif	/* DEFINE_H */
 
