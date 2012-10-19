@@ -14,6 +14,7 @@ int main(int argc, char** argv)
 
 	sql_input();
 
+	DataBase data;
     vector<Attribute> temp1;
     temp1.push_back(Attribute("name", CHAR, 4));
     temp1.push_back(Attribute("phone", CHAR, 4));

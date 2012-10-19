@@ -251,6 +251,9 @@ void sql_input()
 	while(1)
 	{
 		gets(cmd);
+		
+		if(str_cmp(cmd,"EXIT",IGNORE))
+			return;
 
 		if((start = find_char(0, " ", 0, cmd)) == -1)
 			continue;
@@ -265,8 +268,6 @@ void sql_input()
 			sql_create(cmd, end);
 		else if(str_cmp(arg,"INSERT",IGNORE))
 			sql_insert(cmd, end);
-		else if(str_cmp(arg,"EXIT",IGNORE))
-			return;
 		else
 		{
 			cout << "Error SQL" << endl;	
