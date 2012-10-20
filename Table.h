@@ -181,11 +181,6 @@ public:
     //根据提供的属性名和属性值，进行查找，并删除对应列,属性值的类型，要结合attributes,自行判断
     //对应delete语句：delete from tablename where attri_name = value
 
-    vector<int> search(Condition condition)
-    {
-
-    }
-
     vector<int> search(vector<Condition> condition)
     {
         fstream file;
@@ -222,7 +217,11 @@ public:
             file.seekg(location_v, ios::beg);
             file.read(&is_delete, 1);
             if (is_delete == '0')
-                continue;
+            {  
+               
+             location_v += record_size;
+              continue;
+            }
             for (j = 0; j < condition.size(); j++)
             {
                 x = location_v + attri_p[j] + 1;
@@ -230,11 +229,11 @@ public:
                 char *temp = new char(attri[j].size);
                 file.read(temp, attri[j].size);
                 //                string data(temp, attri[j].size);
-                int ope_result = strncmp(temp, condition[j].value.c_str(), attri[j].size);
+                int ope_result=strncmp(temp, condition[j].value.c_str(), attri[j].size);
                 switch (condition[j].operate)
                 {
                 case '=':
-                    if (ope_result != 0)
+                    if (ope_result!= 0)
                         matched = false;
                     break;
                 case '>':
@@ -242,7 +241,7 @@ public:
                         matched = false;
                     break;
                 case '<':
-                    if (ope_result >= 0)
+                    if (ope_result>= 0)
                         matched = false;
                     break;
                 default:
@@ -261,8 +260,9 @@ public:
     bool Delete(string attri_name, string value)
     {
         vector<int> delete_queue;
-
-        delete_queue = search(Condition(attri_name, '=', value));
+        vector<Condition> condition;
+        condition.push_back(Condition(attri_name, '=', value));
+        delete_queue = search(condition);
         int offset;
         fstream file;
         file.open(name.c_str(), ios::out | ios::binary | ios::in);
@@ -286,7 +286,9 @@ public:
     void update(string attri_name1, string value1, string attri_name2, string value2)
     {
         string result;
-        vector<int> search_result = search(Condition(attri_name1, '=', value1));
+        vector<Condition> condition;
+        condition.push_back(Condition(attri_name1, '=', value1));
+        vector<int> search_result = search(condition);
 
         int location = 1;
         Attribute attri;

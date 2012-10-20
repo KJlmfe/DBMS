@@ -10,7 +10,6 @@
 
 
 #include <memory.h>
-#include <map>
 #include "Table.h"
 #include "Condition.h"
 
@@ -34,13 +33,6 @@ public:
         {
             tables[i].describe();
         }
-    }
-
-    int find_table(string table_name)
-    {
-        for (int i = 0; i < tables.size(); i++)
-            if (tables[i].name == table_name)
-                return i;
     }
 
 
@@ -119,9 +111,8 @@ public:
     //sql:select * from name1,name2 where name1.attri1 = name2.attri2;
     //其中l1,l2为两表，参与连接的元组所在行
 
-    Table Equi_Join(Table table1, Table table2, vector<int> l1, vector<int>l2)
+    int Equi_Join(Table table1, Table table2, vector<int> l1, vector<int>l2)
     {
-        Table table;
 
         //保证1号元素，元素大小最小
         if (l1.size() > l2.size())
@@ -143,7 +134,7 @@ public:
         fstream file1, file2, temp;
         file1.open(table1.name.c_str(), ios::in | ios::binary);
         file2.open(table2.name.c_str(), ios::in | ios::binary);
-        temp.open("temp/temp1", ios::out | ios::binary);
+        temp.open("temp", ios::out | ios::binary);
 
         int newsize = table1.get_record_size() + table2.get_record_size() - 1;
 
@@ -167,23 +158,18 @@ public:
         file2.close();
         temp.close();
         delete record;
-
-        table.attributes = table1.attributes;
+        temp_table.attributes.clear();
+        temp_table.attributes = table1.attributes;
         for (int i = 0; i < table2.attributes.size(); i++)
         {
-            table.attributes.push_back(table2.attributes[i]);
+            temp_table.attributes.push_back(table2.attributes[i]);
         }
-
-        rename("temp/temp1", "temp/temp");
-        table.name = "temp/temp";
-        return table;
     }
 
-    Table Equi_Join(Table table1, Table table2, vector<int> l1, vector<int>l2, Attribute attri1, Attribute attri2)
+    int Equi_Join(Table table1, Table table2, vector<int> l1, vector<int>l2, Attribute attri1, Attribute attri2)
     {
-        Table table;
         if (attri1.type != attri2.type || attri1.size != attri2.size)
-            return table;
+            return 0;
         //保证1号元素，元素大小最小
         if (l1.size() > l2.size())
         {
@@ -204,7 +190,7 @@ public:
         fstream file1, file2, temp;
         file1.open(table1.name.c_str(), ios::in | ios::binary);
         file2.open(table2.name.c_str(), ios::in | ios::binary);
-        temp.open("temp/temp1", ios::out | ios::binary);
+        temp.open("temp", ios::out | ios::binary);
 
         //计算连接属性在各表中的位置
         int attri_p_1 = 1;
@@ -282,18 +268,54 @@ public:
         delete record;
 
 
-
-        table.attributes = table1.attributes;
+        temp_table.attributes.clear();
+        temp_table.attributes = table1.attributes;
         for (int i = 0; i < table2.attributes.size(); i++)
         {
             if (table2.attributes[i].name != attri2.name)
-                table.attributes.push_back(table2.attributes[i]);
+                temp_table.attributes.push_back(table2.attributes[i]);
         }
 
-        rename("temp/temp1", "temp/temp");
-        table.name = "temp/temp";
-        return table;
+    }
 
+    string binary_to_string(Attribute attri, string value)
+    {
+        string output;
+        if (attri.type == INT)
+        {
+            int num;
+            memcpy(&num, value.c_str(), INTSIZE);
+            stringstream ss;
+            string str;
+            ss << num;
+            ss >> output;
+            return output;
+        }
+
+        if (attri.type == CHAR)
+            return value;
+
+    }
+
+    string string_to_binary(Attribute attri, string value)
+    {
+        string output;
+        if (attri.type == CHAR)
+        {
+            output = value;
+            output.resize(attri.size, '\0');
+            return output;
+        }
+
+        if (attri.type == INT)
+        {
+            char * temp = new char(INTSIZE);
+            int num = atoi(value.c_str());
+            memcpy(temp, &num, INTSIZE);
+            output.append(temp, INTSIZE);
+            delete temp;
+            return output;
+        }
     }
 
     //投影操作，name为需要操作的文件名，attri为需要投影的那些属性
@@ -304,7 +326,7 @@ public:
         int i = 0;
         int j = 0;
         string result, temp;
-        int location_v = 1;
+        int location_v = 0;
 
         int fullsize = 0;
         int size = 1;
@@ -325,15 +347,26 @@ public:
                 location_h[i] += attri_full[j].size;
         }
         file1.seekg(location_v, ios::beg);
+        char is_delete;
         while (file1.peek() != EOF)
         {
+            file1.read(&is_delete, 1);
+            if (is_delete == '0')
+            {
+                location_v += fullsize;
+               location_v++;
+                file1.seekg(location_v, ios::beg);
+                continue;
+            }
             result.append("1");
             for (i = 0; i < P.size(); i++)
             {
                 char *temp = new char[attri_full[P[i]].size];
-                file1.seekg(location_v + location_h[i], ios::beg);
+                file1.seekg(location_v + location_h[i] + 1, ios::beg);
                 file1.read(temp, attri_full[P[i]].size);
-                result.append(temp, attri_full[P[i]].size);
+                string temp_string = string(temp, attri_full[P[i]].size);
+                result.append(string_to_binary(attri_full[P[i]], temp_string).c_str(), attri_full[P[i]].size);
+                //                result.append(temp, attri_full[P[i]].size);
             }
             file2.write(result.c_str(), size);
             result.clear();
@@ -343,86 +376,20 @@ public:
         }
         file1.close();
         file2.close();
-        rename("temp/temp1", "temp/temp");
+//        rename("temp/temp1", "temp/temp");
 
-        Table temp_table("temp/temp", 0, attributes);
+        Table temp_table("temp/temp1", 0, attributes);
         return temp_table;
     }
 
 
-
     //选择操作
-    //table_name,为涉及的表名，projection,为最后需要显示的属性，join为等值连接操作，condition为查询条件
+    //taboe_name,为涉及的表名，projection,为最后需要显示的属性，join为等值连接操作，condition为查询条件
 
-    void Select(vector<Table> tables, vector<Attribute> projection, vector<Table> join, vector<Condition> conditions)
+    void Select(vector<string> table_name, vector<Table> projection, vector<Table> join, vector<Condition> condition)
     {
-        vector<int> P;
-        map<string, vector<Condition> > table_condition; //table和condition的映射
-        map<string, Table> find_table; //table名和table的映射
-        for (int i = 0; i < conditions.size(); i++)
-        {
-            table_condition[conditions[i].table_name].push_back(conditions[i]);
-        }
-
-        for (int i = 0; i < tables.size(); i++)
-        {
-            find_table[tables[i].name] = tables[i];
-        }
-
-        //为所有属性的前面加上表名
-        for (int i = 0; i < tables.size(); i++)
-        {
-            for (int j = 0; j < tables[i].attributes.size(); j++)
-            {
-                tables[i].attributes[j].name = tables[i].name + "." + tables[i].attributes[j].name;
-            }
-        }
-        if (join.size() > 0)
-        {
-            Table temp_table = find_table[join[0].name];
-            for (int i = 0; i < join.size() / 2; i++)
-            {
-                vector<int> l1, l2;
-                l1 = temp_table.search(table_condition[join[i * 2].name]);
-                l2 = join[i * 2 + 1].search(table_condition[join[i * 2 + 1].name]);
-                temp_table = Equi_Join(temp_table, find_table[join[i * 2 + 1].name], l1, l2, join[i * 2].attributes[0], join[i * 2 + 1].attributes[0]);
-            }
-        }
-
-        for (vector<Table>::iterator p = tables.begin(); p != tables.end();)
-        {
-            bool is_delete = true;
-            for (int i = 0; i < join.size(); i++)
-            {
-                if (p->name == join[i].name)
-                {
-                    p = tables.erase(p);
-                    is_delete = false;
-                }
-            }
-            if (is_delete)
-                ++p;
-        }
 
 
-        for (int i = 0; i < tables.size(); i++)
-        {
-            vector<int> l1 = tables[i].search(table_condition[tables[i].name]);
-            vector<int> l2;
-            temp_table = Equi_Join(temp_table, tables[i], l2, l1);
-        }
-
-        for (int i = 0; i < temp_table.attributes.size(); i++)
-        {
-            for (int j = 0; j < projection.size(); j++)
-                if (temp_table.attributes[i].name == projection[j].name)
-                {
-                    P.push_back(i);
-                    break;
-                }
-        }
-        temp_table = Projection(temp_table.attributes, P);
-        temp_table.show_table();
     }
 
     //显示temp的内容，attri为temp中包含的属性
