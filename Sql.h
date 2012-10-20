@@ -213,7 +213,7 @@ void sql_insert(char *cmd, int start)
             cout << "Error SQL: Please input table_name" << endl;
             return;
         }
-        cout << table_name << endl;
+        //cout << table_name << endl;
 		if((no_table = data.find_table(table_name)) == -1)
 		{
 			cout << "Error SQL: There is no " << table_name << " table in Database." << endl;
@@ -254,7 +254,7 @@ void sql_insert(char *cmd, int start)
 					return;
 				}
 				attr.push_back(attr_name);
-				cout << attr_cnt << " " << attr_name << endl;
+			//	cout << attr_cnt << " " << attr_name << endl;
 			}
 		}
 		if(attr_cnt == 0)
@@ -299,7 +299,7 @@ void sql_insert(char *cmd, int start)
 					cout << "Error SQL: " << attr_value << " is not an invalid value." << endl;
 					return;
 				}
-				cout << cnt << " " << attr_value << endl;
+			//	cout << cnt << " " << attr_value << endl;
 				value.push_back(attr_value);
             }
 			if(cnt != attr_cnt)
@@ -308,7 +308,6 @@ void sql_insert(char *cmd, int start)
 				return;
 			}
 			data.tables[no_table].Insert(attr,value);
-			data.tables[no_table].show_table();
 		}
 		else
 		{
@@ -363,7 +362,14 @@ void sql_create(char *cmd, int start)
             cout << "Error SQL: Please input table_name" << endl;
             return;
         }
-        cout << table_name << endl;
+
+		if(data.find_table(table_name) != -1)
+		{
+			cout << "Error SQL: " << table_name << " is exist in database." << endl;
+			return;
+		}
+
+        //cout << table_name << endl;
         int cnt = 0;
         while (1)
         {
@@ -430,16 +436,14 @@ void sql_create(char *cmd, int start)
             if (str_cmp(attr_type, "INT", IGNORE))
                 temp.push_back(Attribute(attr_name, INT, data_type_size));
 
-            cout << cnt << " " << attr_name << " " << attr_type << " " << data_type_size << endl;
+            //cout << cnt << " " << attr_name << " " << attr_type << " " << data_type_size << endl;
 
             if (cmd[start] == ')')
                 break;
         }
         
-        cout << temp.size() << endl;
+        //cout << temp.size() << endl;
         data.create_table(table_name, 1, temp);
-        data.read_table();
-        data.show_database();
         return;
     }
     else
@@ -447,6 +451,70 @@ void sql_create(char *cmd, int start)
         cout << "Error SQL: It should be start as CREATE TABLE ..." << endl;
         return;
     }
+}
+
+void sql_describe(char *cmd, int start)
+{
+    char arg[1000];
+    char table_name[1000];
+    int end;
+	int no_table;
+
+    if ((start = find_char(0, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    if ((end = find_char(1, " ;", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    str_copy(table_name, cmd, start, end);
+    if (!strcmp(table_name, ""))
+    {
+        cout << "Error SQL: Please input table_name" << endl;
+   	    return;
+    }
+	if((no_table = data.find_table(table_name)) == -1)
+	{
+		cout << "Error SQL: There is no " << table_name << " table in Database." << endl;
+		return;
+	}
+	data.read_table();
+	data.tables[no_table].describe();
+}
+
+void sql_display(char *cmd, int start)
+{
+    char arg[1000];
+    char table_name[1000];
+    int end;
+	int no_table;
+
+    if ((start = find_char(0, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    if ((end = find_char(1, " ;", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    str_copy(table_name, cmd, start, end);
+    if (!strcmp(table_name, ""))
+    {
+        cout << "Error SQL: Please input table_name" << endl;
+   	    return;
+    }
+	if((no_table = data.find_table(table_name)) == -1)
+	{
+		cout << "Error SQL: There is no " << table_name << " table in Database." << endl;
+		return;
+	}
+	data.read_table();
+	data.tables[no_table].show_table();
 }
 
 void sql_input()
@@ -474,8 +542,12 @@ void sql_input()
 
         if (str_cmp(arg, "CREATE", IGNORE))
             sql_create(cmd, end);
-        else if (str_cmp(arg, "INSERT", IGNORE))
+        else if(str_cmp(arg, "INSERT", IGNORE))
             sql_insert(cmd, end);
+        else if(str_cmp(arg, "DESCRIBE", IGNORE))
+            sql_describe(cmd, end);
+        else if(str_cmp(arg, "DISPLAY", IGNORE))
+            sql_display(cmd, end);
         else
         {
             cout << "Error SQL" << endl;
@@ -483,5 +555,4 @@ void sql_input()
         }
     }
 }
-
 
