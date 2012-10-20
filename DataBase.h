@@ -41,6 +41,8 @@ public:
         for (int i = 0; i < tables.size(); i++)
             if (tables[i].name == table_name)
                 return i;
+
+		return -1;
     }
 
 

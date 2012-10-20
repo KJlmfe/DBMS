@@ -114,8 +114,213 @@ int str_to_num(char *str, char *ignore_char)
     return num;
 }
 
+int str_value_fix(char *str)
+{
+	int start = find_char(0," ",0,str);
+
+	if(str[start] == '\"')  //str type
+	{
+		start++;
+		int end = strlen(str)-1;
+
+		while(end >= 0)
+		{
+			if(str[end] == '\"')
+			{
+				end--;
+				break;
+			}
+			else
+				end--;
+		}
+		if(end+1 == start) //empty str
+		{
+			str[0] = '\0';
+			return 1;
+		}
+		if(end < start)
+			return -1;
+
+		for(int i=start; i<=end; i++)
+				str[i-start] = str[i];
+		str[end+1] = '\0';
+		return 1;
+	}
+
+	if(str[start] >= '0' && str[start] <= '9') //int type
+	{
+		int end = strlen(str)-1;
+
+		while(end >= 0)
+		{
+			if(str[end] == ' ')
+				end--;
+			else
+				break;
+		}
+		if(end < start)
+			return -1;
+		for(int i=start; i<=end; i++)
+			if(!(str[i] >= '0'&& str[i] <= '9')) //int type
+				return -1;
+			else
+				str[i-start] = str[i];
+
+		return 1;
+	}
+}
+
 void sql_insert(char *cmd, int start)
 {
+	char arg[1000];
+	char table_name[1000];
+	char attr_value[1000];
+	char attr_name[1000];
+	int end;
+	int cnt = 0;
+	int attr_cnt = 0;
+	int no_table;
+	vector<string> attr;
+	vector<string> value;
+
+    if ((start = find_char(0, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    if ((end = find_char(1, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    str_copy(arg, cmd, start, end);
+
+    if (str_cmp(arg, "INTO", IGNORE))
+    {
+        if ((start = find_char(0, " ", end, cmd)) == -1)
+        {
+            cout << "Error SQL" << endl;
+            return;
+        }
+        if ((end = find_char(1, " (", start, cmd)) == -1)
+        {
+            cout << "Error SQL" << endl;
+            return;
+        }
+        str_copy(table_name, cmd, start, end);
+        if (!strcmp(table_name, ""))
+        {
+            cout << "Error SQL: Please input table_name" << endl;
+            return;
+        }
+        cout << table_name << endl;
+		if((no_table = data.find_table(table_name)) == -1)
+		{
+			cout << "Error SQL: There is no " << table_name << " table in Database." << endl;
+			return;
+		}
+		
+	    if ((start = find_char(0, " ", end, cmd)) == -1)
+        {
+            cout << "Error SQL" << endl;
+            return;
+        }
+		end = start;
+
+		if(cmd[start] == '(')
+		{
+			while(1)
+			{
+				if ((start = find_char(0, "(, ", end, cmd)) == -1)
+				{
+					cout << "Error SQL" << endl;
+					return;
+				}
+				if(cmd[start] == ')')
+				{
+					end = start;
+					break;
+				}
+				attr_cnt++;
+				if ((end = find_char(1, " ,)", start, cmd)) == -1)
+				{
+					cout << "Error SQL" << endl;
+					return;
+				}
+				str_copy(attr_name, cmd, start, end);
+				if(data.tables[no_table].get_attribute_by_name(attr_name) == -1)
+				{
+					cout << "Error SQL: There is no " << attr_name << " in " << table_name << endl;
+					return;
+				}
+				attr.push_back(attr_name);
+				cout << attr_cnt << " " << attr_name << endl;
+			}
+		}
+		if(attr_cnt == 0)
+		{
+			attr_cnt = data.tables[no_table].attributes.size();
+			attr = data.tables[no_table].get_all_attributes_name();
+		}
+
+		if ((start = find_char(0, " )", end, cmd)) == -1)
+        {
+            cout << "Error SQL" << endl;
+            return;
+        }
+        if ((end = find_char(1, "( ", start, cmd)) == -1)
+        {
+            cout << "Error SQL" << endl;
+            return;
+        }
+		
+        str_copy(arg, cmd, start, end);
+
+    	if (str_cmp(arg, "VALUES", IGNORE))
+		{
+			while (1)
+			{
+				if ((start = find_char(0, "(, ", end, cmd)) == -1)
+				{
+					cout << "Error SQL" << endl;
+					return;
+				}
+				if(cmd[start] == ')')
+					break;
+				cnt++;
+				if ((end = find_char(1, ",)", start, cmd)) == -1)
+				{
+					cout << "Error SQL" << endl;
+					return;
+				}
+				str_copy(attr_value, cmd, start, end);
+				if(str_value_fix(attr_value) == -1)
+				{
+					cout << "Error SQL: " << attr_value << " is not an invalid value." << endl;
+					return;
+				}
+				cout << cnt << " " << attr_value << endl;
+				value.push_back(attr_value);
+            }
+			if(cnt != attr_cnt)
+			{
+				cout << "Error SQL: the number of attributes != the number of values." << endl;
+				return;
+			}
+			data.tables[no_table].Insert(attr,value);
+			data.tables[no_table].show_table();
+		}
+		else
+		{
+			cout << "Error SQL: It should be start as INSERT INTO table_name VALUES ..." << endl;
+			return;
+		}
+	}
+	else
+	{
+        cout << "Error SQL: It should be start as INSERT INTO ..." << endl;
+        return;
+	}
 }
 
 void sql_create(char *cmd, int start)
@@ -127,7 +332,6 @@ void sql_create(char *cmd, int start)
     char type_size[1000];
     int data_type_size;
     int end;
-    DataBase data;
     vector<Attribute> temp;
 
     if ((start = find_char(0, " ", start, cmd)) == -1)
@@ -148,7 +352,7 @@ void sql_create(char *cmd, int start)
             cout << "Error SQL" << endl;
             return;
         }
-        if ((end = find_char(1, "(", start, cmd)) == -1)
+        if ((end = find_char(1, "( ", start, cmd)) == -1)
         {
             cout << "Error SQL" << endl;
             return;
