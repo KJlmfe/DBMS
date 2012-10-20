@@ -45,7 +45,15 @@ public:
         //        Insert(attri_name, value);
     }
 
+	vector<string> get_all_attributes_name()
+	{
+		vector<string> attr_name;
 
+		for(int i=0; i<attributes.size(); i++)
+			attr_name.push_back(attributes[i].name);
+
+		return attr_name;
+	}
     //显示当前表结构
 
     void describe()
@@ -346,6 +354,16 @@ public:
         }
         file.close();
     }
+
+	int get_attribute_by_name(char *attr_name)
+	{
+		string tmp_name = attr_name;
+	    for (int i = 0; i < attributes.size(); i++)
+			
+            if(attributes[i].name == tmp_name)
+				return i;
+	 	return -1;
+	}
 
     void show_table()
     {

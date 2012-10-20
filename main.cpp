@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include "Table.h"
 #include "DataBase.h"
+DataBase data;
 #include "Sql.h"
 using namespace std;
 
