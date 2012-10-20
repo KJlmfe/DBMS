@@ -395,8 +395,8 @@ public:
             }
             cout << endl;
         }
-        delete temp;
-        file.close();
+		delete temp;
+		file.close();
     }
 };
 
