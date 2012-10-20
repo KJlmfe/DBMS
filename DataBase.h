@@ -10,7 +10,6 @@
 
 
 #include <memory.h>
-#include <map>
 #include "Table.h"
 #include "Condition.h"
 
@@ -42,8 +41,9 @@ public:
             if (tables[i].name == table_name)
                 return i;
 
-		return -1;
+        return -1;
     }
+
 
 
 
@@ -92,7 +92,7 @@ public:
 
     void create_table(string table_name, int key_num, vector<Attribute> attributes)
     {
-        
+
         //将新表写入内存
         Table table;
         table.name = table_name;
@@ -109,7 +109,7 @@ public:
         int number = attributes.size();
         file.write((char *) &number, INTSIZE); //写入属性数量
         for (vector<Attribute>::iterator p = attributes.begin(); p != attributes.end(); p++)
-        {           
+        {
 
             file.write(p->name.c_str(), NAMESIZE);
             file.write((char *) &(p->type), sizeof (DataType));
@@ -279,7 +279,7 @@ public:
                 file2.seekg(l2[j] * table2.get_record_size() + attri_p_2, ios::beg);
                 file2.read(temp2, attri2.size);
                 string data2(temp2, attri2.size);
-                //               
+                //
                 if (data1 == data2)
                 {
                     file1.seekg(l1[i] * table1.get_record_size() + 1);
@@ -300,7 +300,7 @@ public:
                             file2.seekg(table2.attributes[i].size, ios::cur);
                         }
                     }
-                    //               
+                    //
                     temp.write(record, newsize);
                 }
 
@@ -328,6 +328,46 @@ public:
 
     }
 
+    string binary_to_string(Attribute attri, string value)
+    {
+        string output;
+        if (attri.type == INT)
+        {
+            int num;
+            memcpy(&num, value.c_str(), INTSIZE);
+            stringstream ss;
+            string str;
+            ss << num;
+            ss >> output;
+            return output;
+        }
+
+        if (attri.type == CHAR)
+            return value;
+
+    }
+
+    string string_to_binary(Attribute attri, string value)
+    {
+        string output;
+        if (attri.type == CHAR)
+        {
+            output = value;
+            output.resize(attri.size, '\0');
+            return output;
+        }
+
+        if (attri.type == INT)
+        {
+            char * temp = new char(INTSIZE);
+            int num = atoi(value.c_str());
+            memcpy(temp, &num, INTSIZE);
+            output.append(temp, INTSIZE);
+            delete temp;
+            return output;
+        }
+    }
+
     //投影操作，name为需要操作的文件名，attri为需要投影的那些属性
 
     Table Projection(vector<Attribute> attri_full, vector<int> P)
@@ -336,8 +376,8 @@ public:
         int i = 0;
         int j = 0;
         string result, temp;
-        int location_v = 1;
-
+        int location_v = 0;
+        char is_one[1] = {'1'};
         int fullsize = 0;
         int size = 1;
         for (i = 0; i < attri_full.size(); i++)
@@ -357,18 +397,31 @@ public:
                 location_h[i] += attri_full[j].size;
         }
         file1.seekg(location_v, ios::beg);
+        char is_delete;
         while (file1.peek() != EOF)
         {
-            result.append("1");
+            file1.read(&is_delete, 1);
+            if (is_delete == '0')
+            {
+                location_v += fullsize;
+                location_v++;
+                file1.seekg(location_v, ios::beg);
+                continue;
+            }
+            file2.write(is_one, 1);
+            //            result.append("1");
             for (i = 0; i < P.size(); i++)
             {
                 char *temp = new char[attri_full[P[i]].size];
-                file1.seekg(location_v + location_h[i], ios::beg);
+                file1.seekg(location_v + location_h[i] + 1, ios::beg);
                 file1.read(temp, attri_full[P[i]].size);
-                result.append(temp, attri_full[P[i]].size);
+                file2.write(temp, attri_full[P[i]].size);
+                //                string temp_string = string(temp, attri_full[P[i]].size);
+                //                result.append(string_to_binary(attri_full[P[i]], temp_string).c_str(), attri_full[P[i]].size);
+                //                result.append(temp, attri_full[P[i]].size);
             }
-            file2.write(result.c_str(), size);
-            result.clear();
+            //            file2.write(result.c_str(), size);
+            //            result.clear();
             location_v += fullsize;
             location_v++;
             file1.seekg(location_v, ios::beg);
@@ -376,7 +429,6 @@ public:
         file1.close();
         file2.close();
         rename("temp/temp1", "temp/temp");
-
         Table temp_table("temp/temp", 0, attributes);
         return temp_table;
     }
@@ -384,42 +436,23 @@ public:
 
 
     //选择操作
-    //table_name,为涉及的表名，projection,为最后需要显示的属性，join为等值连接操作，condition为查询条件
+    //taboe_name,为涉及的表名，projection,为最后需要显示的属性，join为等值连接操作，condition为查询条件
 
-    void Select(vector<Table> tables, vector<Attribute> projection, vector<Table> join, vector<Condition> conditions)
+    void Select(vector<string> table_name, vector<Table> projection, vector<Table> join, vector<Condition> condition)
     {
+
         Table temp_table;
         vector<int> P;
         map<string, vector<Condition> > table_condition; //table和condition的映射
         map<string, Table> find_table; //table名和table的映射
-        for (int i = 0; i < conditions.size(); i++)
+        for (int i = 0; i < condition.size(); i++)
         {
-            table_condition[conditions[i].table_name].push_back(conditions[i]);
+            table_condition[condition[i].table_name].push_back(condition[i]);
         }
 
         for (int i = 0; i < tables.size(); i++)
         {
             find_table[tables[i].name] = tables[i];
-        }
-
-        //为所有属性的前面加上表名
-        for (int i = 0; i < tables.size(); i++)
-        {
-            for (int j = 0; j < tables[i].attributes.size(); j++)
-            {
-                tables[i].attributes[j].name = tables[i].name + "." + tables[i].attributes[j].name;
-            }
-        }
-        if (join.size() > 0)
-        {
-            Table temp_table = find_table[join[0].name];
-            for (int i = 0; i < join.size() / 2; i++)
-            {
-                vector<int> l1, l2;
-                l1 = temp_table.search(table_condition[join[i * 2].name]);
-                l2 = join[i * 2 + 1].search(table_condition[join[i * 2 + 1].name]);
-                temp_table = Equi_Join(temp_table, find_table[join[i * 2 + 1].name], l1, l2, join[i * 2].attributes[0], join[i * 2 + 1].attributes[0]);
-            }
         }
 
         for (vector<Table>::iterator p = tables.begin(); p != tables.end();)
@@ -450,7 +483,7 @@ public:
         else
         {
             if (tables.size() > 0)
-            {                
+            {
                 vector<int> l1 = tables[0].search(table_condition[tables[0].name]);
                 vector<int> l2;
                 temp_table = Equi_Join(tables[0], tables[0], l1, l2);
@@ -474,6 +507,7 @@ public:
         }
         temp_table = Projection(temp_table.attributes, P);
         temp_table.show_table();
+
     }
 
     //显示temp的内容，attri为temp中包含的属性

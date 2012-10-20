@@ -45,15 +45,15 @@ public:
         //        Insert(attri_name, value);
     }
 
-	vector<string> get_all_attributes_name()
-	{
-		vector<string> attr_name;
+    vector<string> get_all_attributes_name()
+    {
+        vector<string> attr_name;
 
-		for(int i=0; i<attributes.size(); i++)
-			attr_name.push_back(attributes[i].name);
+        for (int i = 0; i < attributes.size(); i++)
+            attr_name.push_back(attributes[i].name);
 
-		return attr_name;
-	}
+        return attr_name;
+    }
     //显示当前表结构
 
     void describe()
@@ -198,8 +198,8 @@ public:
             }
         }
 
-        file.close();     
-        file.open(name.c_str(), ios::out | ios::app | ios::binary);        
+        file.close();
+        file.open(name.c_str(), ios::out | ios::app | ios::binary);
         file.write(result.c_str(), result.size());
         file.close();
     }
@@ -219,22 +219,9 @@ public:
     {
         fstream file;
         int i, j;
-        int record_num = file.tellg() / get_record_size(); //计算元组总条数 
-
-        if (condition.size() == 0)
-        {
-            vector<int> a;
-            for (int i = 0; i < record_num; i++)
-            {
-                a.push_back(i);
-            }
-            return a;
-        }
-
         file.open(name.c_str(), ios::in | ios::binary);
         file.seekg(0, ios::end);
-
-
+        int record_num = file.tellg() / get_record_size(); //计算元组总条数            
         vector<int> output;
         vector<int> attri_p;
         vector<Attribute> attri;
@@ -264,7 +251,11 @@ public:
             file.seekg(location_v, ios::beg);
             file.read(&is_delete, 1);
             if (is_delete == '0')
+            {
+
+                location_v += record_size;
                 continue;
+            }
             for (j = 0; j < condition.size(); j++)
             {
                 x = location_v + attri_p[j] + 1;
@@ -303,8 +294,9 @@ public:
     bool Delete(string attri_name, string value)
     {
         vector<int> delete_queue;
-
-        delete_queue = search(Condition(attri_name, '=', value));
+        vector<Condition> condition;
+        condition.push_back(Condition(attri_name, '=', value));
+        delete_queue = search(condition);
         int offset;
         fstream file;
         file.open(name.c_str(), ios::out | ios::binary | ios::in);
@@ -328,7 +320,9 @@ public:
     void update(string attri_name1, string value1, string attri_name2, string value2)
     {
         string result;
-        vector<int> search_result = search(Condition(attri_name1, '=', value1));
+        vector<Condition> condition;
+        condition.push_back(Condition(attri_name1, '=', value1));
+        vector<int> search_result = search(condition);
 
         int location = 1;
         Attribute attri;
@@ -355,15 +349,15 @@ public:
         file.close();
     }
 
-	int get_attribute_by_name(char *attr_name)
-	{
-		string tmp_name = attr_name;
-	    for (int i = 0; i < attributes.size(); i++)
-			
-            if(attributes[i].name == tmp_name)
-				return i;
-	 	return -1;
-	}
+    int get_attribute_by_name(char *attr_name)
+    {
+        string tmp_name = attr_name;
+        for (int i = 0; i < attributes.size(); i++)
+
+            if (attributes[i].name == tmp_name)
+                return i;
+        return -1;
+    }
 
     void show_table()
     {
@@ -395,8 +389,8 @@ public:
             }
             cout << endl;
         }
-		delete temp;
-		file.close();
+        delete temp;
+        file.close();
     }
 };
 
