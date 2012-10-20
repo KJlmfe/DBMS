@@ -172,9 +172,27 @@ public:
         }
 
         fstream file;
-        file.open(name.c_str(), ios::out | ios::app | ios::binary);
-        file.write(result.c_str(), result.size());
+        file.open(name.c_str(), ios::in | ios::out | ios::binary);
+        file.seekg(0, ios::end);
+        int record_num = file.tellg() / get_record_size(); //计算元组总条数 
 
+        char judge;
+        for (int i = 0; i < record_num; i++)
+        {
+            file.seekg(i * get_record_size(), ios::beg);
+            file.read(&judge, 1);
+            if (judge == '0')
+            {
+                file.seekg(i * get_record_size(), ios::beg);
+                file.write(result.c_str(), result.size());
+                file.close();
+                return;
+            }
+        }
+
+        file.close();     
+        file.open(name.c_str(), ios::out | ios::app | ios::binary);        
+        file.write(result.c_str(), result.size());
         file.close();
     }
 
@@ -184,15 +202,31 @@ public:
     vector<int> search(Condition condition)
     {
 
+        vector<Condition> a;
+        a.push_back(condition);
+        return search(a);
     }
 
     vector<int> search(vector<Condition> condition)
     {
         fstream file;
         int i, j;
+        int record_num = file.tellg() / get_record_size(); //计算元组总条数 
+
+        if (condition.size() == 0)
+        {
+            vector<int> a;
+            for (int i = 0; i < record_num; i++)
+            {
+                a.push_back(i);
+            }
+            return a;
+        }
+
         file.open(name.c_str(), ios::in | ios::binary);
         file.seekg(0, ios::end);
-        int record_num = file.tellg() / get_record_size(); //计算元组总条数            
+
+
         vector<int> output;
         vector<int> attri_p;
         vector<Attribute> attri;
@@ -323,12 +357,18 @@ public:
 
         fstream file;
         file.open(name.c_str(), ios::in | ios::binary);
+        file.seekg(0, ios::end);
+        int record_num = file.tellg() / get_record_size();
 
         char *temp = new char(get_record_size());
 
-        while (file.peek() != EOF)
+        for (int i = 0; i < record_num; i++)
         {
+            file.seekg(i * get_record_size());
             file.read(temp, 1);
+            if (temp[0] == '0')
+                continue;
+
             for (int i = 0; i < attributes.size(); i++)
             {
                 file.read(temp, attributes[i].size);

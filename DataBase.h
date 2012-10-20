@@ -90,7 +90,7 @@ public:
 
     void create_table(string table_name, int key_num, vector<Attribute> attributes)
     {
-        cout << table_name << endl;
+        
         //将新表写入内存
         Table table;
         table.name = table_name;
@@ -107,8 +107,7 @@ public:
         int number = attributes.size();
         file.write((char *) &number, INTSIZE); //写入属性数量
         for (vector<Attribute>::iterator p = attributes.begin(); p != attributes.end(); p++)
-        {
-            cout << p->name << endl;
+        {           
 
             file.write(p->name.c_str(), NAMESIZE);
             file.write((char *) &(p->type), sizeof (DataType));
@@ -124,6 +123,7 @@ public:
     Table Equi_Join(Table table1, Table table2, vector<int> l1, vector<int>l2)
     {
         Table table;
+        char judge;
 
         //保证1号元素，元素大小最小
         if (l1.size() > l2.size())
@@ -152,13 +152,32 @@ public:
         char * record = new char(newsize);
 
 
+        if (l1.size() == 0)
+        {
+            for (int j = 0; j < l2.size(); j++)
+            {
+                file2.seekg(l2[j] * table2.get_record_size(), ios::beg);
+                file2.read(&judge, 1);
+                if (judge == '0')
+                    continue;
+                file2.read(record + table1.get_record_size(), table2.get_record_size() - 1);
+                temp.write(record, newsize);
+            }
+        }
         for (int i = 0; i < l1.size(); i++)
         {
             file1.seekg(l1[i] * table1.get_record_size(), ios::beg);
-            file1.read(record, table1.get_record_size());
+            file1.read(&judge, 1);
+            if (judge == '0')
+                continue;
+            record[0] = '1';
+            file1.read(record + 1, table1.get_record_size() - 1);
             for (int j = 0; j < l2.size(); j++)
             {
-                file2.seekg(l2[j] * table2.get_record_size() + 1, ios::beg);
+                file2.seekg(l2[j] * table2.get_record_size(), ios::beg);
+                file2.read(&judge, 1);
+                if (judge == '0')
+                    continue;
                 file2.read(record + table1.get_record_size(), table2.get_record_size() - 1);
                 temp.write(record, newsize);
             }
@@ -184,6 +203,7 @@ public:
     Table Equi_Join(Table table1, Table table2, vector<int> l1, vector<int>l2, Attribute attri1, Attribute attri2)
     {
         Table table;
+        char judge;
         if (attri1.type != attri2.type || attri1.size != attri2.size)
             return table;
         //保证1号元素，元素大小最小
@@ -239,6 +259,10 @@ public:
 
         for (int i = 0; i < l1.size(); i++)
         {
+            file1.seekg(l1[i] * table1.get_record_size(), ios::beg);
+            file1.read(&judge, 1);
+            if (judge == '0')
+                continue;
             file1.seekg(l1[i] * table1.get_record_size() + attri_p_1, ios::beg);
             file1.read(temp1, attri1.size);
             string data1(temp1, attri1.size);
@@ -246,6 +270,10 @@ public:
 
             for (int j = 0; j < l2.size(); j++)
             {
+                file2.seekg(l2[j] * table2.get_record_size(), ios::beg);
+                file2.read(&judge, 1);
+                if (judge == '0')
+                    continue;
                 file2.seekg(l2[j] * table2.get_record_size() + attri_p_2, ios::beg);
                 file2.read(temp2, attri2.size);
                 string data2(temp2, attri2.size);
@@ -418,15 +446,17 @@ public:
             }
         }
         else
-        {      
+        {
             if (tables.size() > 0)
-            {
-                temp_table = tables[0];
-                for (int i = 0; i < tables.size(); i++)
+            {                
+                vector<int> l1 = tables[0].search(table_condition[tables[0].name]);
+                vector<int> l2;
+                temp_table = Equi_Join(tables[0], tables[0], l1, l2);
+                for (int i = 1; i < tables.size(); i++)
                 {
-                    vector<int> l1 = tables[i].search(table_condition[tables[i].name]);
-                    vector<int> l2;
-                    temp_table = Equi_Join(temp_table, tables[i], l2, l1);
+                    vector<int> l1;
+                    vector<int> l2 = tables[i].search(table_condition[tables[i].name]);
+                    temp_table = Equi_Join(temp_table, tables[i], l1, l2);
                 }
             }
         }
