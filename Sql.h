@@ -517,6 +517,131 @@ void sql_display(char *cmd, int start)
 	data.tables[no_table].show_table();
 }
 
+void sql_delete(char *cmd, int start)
+{
+    char arg[1000];
+    char attr_signal[1000];
+	char attr_value[1000];
+    char attr_name[1000];
+    char table_name[1000];
+    int end;
+	int no_table;
+
+    if ((start = find_char(0, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    if ((end = find_char(1, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    str_copy(arg, cmd, start, end);
+
+    if(!str_cmp(arg, "FROM", IGNORE))
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+  
+    if ((start = find_char(0, " ", end, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    if ((end = find_char(1, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    str_copy(table_name, cmd, start, end);
+    if (!strcmp(table_name, ""))
+    {
+        cout << "Error SQL: Please input table_name" << endl;
+   	    return;
+    }
+	if((no_table = data.find_table(table_name)) == -1)
+	{
+		cout << "Error SQL: There is no " << table_name << " table in Database." << endl;
+		return;
+	}
+
+    if ((start = find_char(0, " ", end, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    if ((end = find_char(1, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    str_copy(arg, cmd, start, end);
+    if(!str_cmp(arg, "WHERE", IGNORE))
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+
+  	if ((start = find_char(0, " ", end, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    if ((end = find_char(1, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    str_copy(attr_name, cmd, start, end);
+
+  	if ((start = find_char(0, " ", end, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    if ((end = find_char(1, " ", start, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    str_copy(attr_signal, cmd, start, end);
+
+  	if ((start = find_char(0, " ", end, cmd)) == -1)
+    {
+        cout << "Error SQL" << endl;
+        return;
+    }
+    str_copy(attr_value, cmd, start, strlen(cmd));
+
+	cout << "1 " << table_name << " 11 " << attr_name << " 11 " << attr_signal << " 11 "<< attr_value << endl;
+	data.tables[no_table].Delete(attr_name,attr_value);
+
+}
+void sql_update(char *cmd,int start)
+{
+   char seps[] = " ";
+   char *token;
+   char args[100][1000];
+   int cnt=0;
+   int no_table;
+
+   token = strtok(cmd, seps );
+   while( token != NULL )
+   {
+   	  strcpy(args[cnt++],token);
+      //printf( "%d %s\n",cnt-1,args[cnt-1]);
+      token = strtok( NULL, seps );
+   }
+
+   if((no_table = data.find_table(args[1])) == -1)
+	{
+		cout << "Error SQL: There is no " << args[1] << " table in Database." << endl;
+		return;
+	}
+	data.tables[no_table].update(args[7],args[9],args[3],args[5]);
+}
 void sql_input()
 {
     char cmd[1000];
@@ -548,6 +673,10 @@ void sql_input()
             sql_describe(cmd, end);
         else if(str_cmp(arg, "DISPLAY", IGNORE))
             sql_display(cmd, end);
+		else if(str_cmp(arg, "DELETE", IGNORE))
+            sql_delete(cmd, end);
+		else if(str_cmp(arg, "UPDATE", IGNORE))
+            sql_update(cmd, end);
         else
         {
             cout << "Error SQL" << endl;
