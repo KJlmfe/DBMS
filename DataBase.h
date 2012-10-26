@@ -438,6 +438,7 @@ public:
     //选择操作
     //taboe_name,为涉及的表名，projection,为最后需要显示的属性，join为等值连接操作，condition为查询条件
 
+    //select student1.id,student1.name,school.name from student,school where student1.id = student2.id and school.name = "CCC";
     void Select(vector<string> table_name, vector<Table> projection, vector<Table> join, vector<Condition> condition)
     {
 
