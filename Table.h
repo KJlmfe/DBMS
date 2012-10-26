@@ -262,8 +262,8 @@ public:
                 file.seekg(x, ios::beg);
                 char *temp = new char(attri[j].size);
                 file.read(temp, attri[j].size);
-                //                string data(temp, attri[j].size);
-                int ope_result = strncmp(temp, condition[j].value.c_str(), attri[j].size);
+                string data(temp, attri[j].size);
+                int ope_result = strncmp(binary_to_string(attri[j], data).c_str(), condition[j].value.c_str(), attri[j].size);
                 switch (condition[j].operate)
                 {
                 case '=':
@@ -291,11 +291,11 @@ public:
 
     }
 
-    bool Delete(string attri_name, string value)
+    bool Delete(string attri_name, char x, string value)
     {
         vector<int> delete_queue;
         vector<Condition> condition;
-        condition.push_back(Condition(attri_name, '=', value));
+        condition.push_back(Condition(attri_name, x, value));
         delete_queue = search(condition);
         int offset;
         fstream file;
