@@ -45,6 +45,15 @@ public:
         //        Insert(attri_name, value);
     }
 
+	int find_attr(string attr_name)
+	{
+        for (int i = 0; i < attributes.size(); i++)
+			if(attributes[i].name == attr_name)
+				return i;
+
+		return -1;
+	}
+
     vector<string> get_all_attributes_name()
     {
         vector<string> attr_name;
@@ -291,11 +300,11 @@ public:
 
     }
 
-    bool Delete(string attri_name, char x, string value)
+    bool Delete(string attri_name, string value)
     {
         vector<int> delete_queue;
         vector<Condition> condition;
-        condition.push_back(Condition(attri_name, x, value));
+        condition.push_back(Condition(attri_name, '=', value));
         delete_queue = search(condition);
         int offset;
         fstream file;

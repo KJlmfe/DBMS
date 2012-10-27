@@ -642,6 +642,125 @@ void sql_update(char *cmd,int start)
 	}
 	data.tables[no_table].update(args[7],args[9],args[3],args[5]);
 }
+    //sql:select * from name1,name2 where name1.attri1 = name2.attri2;
+void sql_select(char *cmd,int start)
+{
+   char seps[] = " ";
+   char *token;
+   char args[100][1000];
+   int a_cnt=0;
+   char name1[100];
+   char attr1[100];
+   char name2[100];
+   char attr2[100];
+   char value[100];
+   int no_table;
+   int no_attr;
+   int cnt;
+   vector<string> attri_name;
+   vector<string> table_name;
+   vector<Table> join;
+   vector<Condition> conditon;
+
+	char tmp_name[1000];
+
+   token = strtok(cmd, seps );
+   while( token != NULL )
+   {
+   	  strcpy(args[a_cnt++],token);
+      printf( "%d %s\n",a_cnt-1,args[a_cnt-1]);
+      token = strtok( NULL, seps );
+   }
+
+   if(args[1][0] != '*')
+   {
+   		cnt = 0;
+   		token = strtok(args[1], ",");
+   		while( token != NULL )
+   		{
+   	  		strcpy(tmp_name,token);
+      		printf( "st %s\n",tmp_name);
+			attri_name.push_back(tmp_name);
+      		token = strtok( NULL, "," );
+   		}
+   }
+
+	cnt = 0;
+	token = strtok(args[3], ",");
+	while( token != NULL )
+	{
+		strcpy(tmp_name,token);
+      	printf( "ft %s\n",tmp_name);
+		table_name.push_back(tmp_name);
+      	token = strtok( NULL, ",." );
+   	}
+	for(int i=5;i<a_cnt;i+=2)
+	{
+		int sum = 0;
+		for(int j=0;j<strlen(args[i]);j++)
+			if(args[i][j] == '.')
+				sum++;
+
+		if(sum == 2)  //等值链接
+		{
+			token = strtok(args[i], ".");
+			strcpy(name1,token);
+      		token = strtok( NULL, "=" );
+			strcpy(attr1,token);
+			token = strtok(NULL, ".");
+			strcpy(name2,token);
+      		token = strtok( NULL, " " );
+			strcpy(attr2,token);
+			printf("dz %s %s %s %s\n",name1,attr1,name2,attr2);
+
+			Table tmp_table_a,tmp_table_b;
+			if((no_table = data.find_table(name1)) == -1)
+			{
+				cout << "Error SQL: There is no " << name1 << " table in Database." << endl;
+				return;
+			}
+			if((no_attr = data.tables[no_table].find_attr(attr1)) == -1)
+			{
+				cout << "Error SQL: There is no " << attr1 << " attributes." << endl;
+				return;
+			}
+			tmp_table_a = data.tables[no_table];
+			tmp_table_a.attributes.clear();
+			tmp_table_a.attributes.push_back(data.tables[no_table].attributes[no_attr]);
+
+			if((no_table = data.find_table(name2)) == -1)
+			{
+				cout << "Error SQL: There is no " << name2 << " table in Database." << endl;
+				return;
+			}
+			if((no_attr = data.tables[no_table].find_attr(attr2)) == -1)
+			{
+				cout << "Error SQL: There is no " << attr2 << " attributes." << endl;
+				return;
+			}
+			tmp_table_b = data.tables[no_table];
+			tmp_table_b.attributes.clear();
+			tmp_table_b.attributes.push_back(data.tables[no_table].attributes[no_attr]);
+
+			join.push_back(tmp_table_a);
+			join.push_back(tmp_table_b);
+		}
+		else
+		{
+			token = strtok(args[i], ".");
+			strcpy(name1,token);
+      		token = strtok( NULL, "=" );
+			strcpy(attr1,token);
+			token = strtok(NULL, " ");
+			strcpy(value,token);
+			printf("tj %s %s %s\n",name1,attr1,value);
+			
+			Condition tmp_con(name1,attr1,'=',value);
+			conditon.push_back(tmp_con);
+		}
+	}
+	data.Select(table_name,attri_name,join,conditon);
+}
 void sql_input()
 {
     char cmd[1000];
@@ -677,6 +796,8 @@ void sql_input()
             sql_delete(cmd, end);
 		else if(str_cmp(arg, "UPDATE", IGNORE))
             sql_update(cmd, end);
+		else if(str_cmp(arg, "SELECT", IGNORE))
+            sql_select(cmd, end);
         else
         {
             cout << "Error SQL" << endl;
